@@ -2,13 +2,13 @@
 
 # 🐱 FloppaOS / MeuOS
 
-### Floppa Edition 1.02
+### Floppa Edition · estável **1.02** · beta **1.03**
 
 Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Floppa** e uma linguagem de programação própria, a **FloopyC**.
 
 [![Baixar a ISO](https://img.shields.io/badge/⬇_Baixar_a_ISO-meuos--v1.02.iso-orange?style=for-the-badge)](https://github.com/Heitorcoser/FloppaOS/releases/download/FloppaOS/meuos-v1.02.iso)
-[![Versão](https://img.shields.io/badge/versão-1.02-blue?style=for-the-badge)](https://github.com/Heitorcoser/FloppaOS/releases)
-[![Licença](https://img.shields.io/badge/Linux-XFCE-informational?style=for-the-badge)](#-o-que-vem-dentro)
+[![Beta](https://img.shields.io/badge/beta-1.03-yellow?style=for-the-badge)](https://github.com/Heitorcoser/FloppaOS/releases)
+[![Linguagem](https://img.shields.io/badge/📖_Aprender-FloopyC-green?style=for-the-badge)](docs/index.md)
 
 </div>
 
@@ -16,11 +16,12 @@ Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Flopp
 
 ## ⬇️ Baixar
 
-| Arquivo | Tamanho | Link |
-|---|---|---|
-| `meuos-v1.02.iso` | ~1,3 GB | [**Baixar agora**](https://github.com/Heitorcoser/FloppaOS/releases/download/FloppaOS/meuos-v1.02.iso) |
+| Versão | Arquivo | Tamanho | Link |
+|---|---|---|---|
+| **1.02** (estável) | `meuos-v1.02.iso` | ~1,3 GB | [**Baixar agora**](https://github.com/Heitorcoser/FloppaOS/releases/download/FloppaOS/meuos-v1.02.iso) |
+| **1.03 beta** | `meuos-v1.03-beta.iso` | — | Na página de [**Releases**](https://github.com/Heitorcoser/FloppaOS/releases) |
 
-**Conferir se baixou inteiro (SHA-256):**
+**Conferir se a 1.02 baixou inteira (SHA-256):**
 
 ```
 5377321ae94d4736903210ff98009822c712995a1248bee0ea24d88fbb0ecd6b
@@ -30,6 +31,7 @@ Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Flopp
 - Linux: `sha256sum meuos-v1.02.iso`
 
 Todas as versões: [página de Releases](https://github.com/Heitorcoser/FloppaOS/releases).
+Notas da versão beta: [`NOTAS-DE-ATUALIZACAO-1.03-beta.md`](NOTAS-DE-ATUALIZACAO-1.03-beta.md).
 
 ---
 
@@ -39,12 +41,15 @@ Todas as versões: [página de Releases](https://github.com/Heitorcoser/FloppaOS
 |---|---|
 | 🖥️ | Desktop **XFCE** leve, com tela de carregamento do Floppa |
 | 💾 | **Instalador**: instala no disco do computador (BIOS e UEFI). O CD serve só para instalar |
+| 🪟 | **Ao lado do Windows** *(1.03 beta)*: instala no espaço livre do disco, sem apagar nada, e o GRUB oferece o Windows no menu |
+| 🧩 | **GParted** *(1.03 beta)*: crie, apague e encolha partições antes de instalar |
 | ⚡ | **Floppa Otimizer**: ajusta o sistema conforme a memória, o processador, o vídeo e o disco |
 | 🔄 | **Floppa Update**: o sistema se atualiza sozinho, com pacotes assinados |
 | 📦 | **Conteúdo adicional**: baixe extras como o **FloppyMakes** |
 | 🐍 | **Python**, **JavaScript** (Node) e **FloopyC** prontos para usar |
 | 🍷 | **Wine**: roda programas e jogos do Windows (`.exe`) |
-| 🎮 | Jogos feitos em FloopyC: cobra, adivinha o número, pedra-papel-tesoura |
+| 🎮 | Jogos feitos em FloopyC: cobra, adivinha o número, pedra-papel-tesoura, peixes, piano |
+| 🔊 | **Som e voz**: o FloopyC toca notas e fala em voz alta |
 | 🖼️ | Troca de **tela de fundo** e **histórico de versões** dentro do sistema |
 
 ---
@@ -54,12 +59,25 @@ Todas as versões: [página de Releases](https://github.com/Heitorcoser/FloppaOS
 1. Baixe a ISO e confira o SHA-256.
 2. **Máquina virtual (VirtualBox):** crie uma VM Linux 64 bits com **4 GB de RAM** (mínimo 2 GB) e disco de **12 GB ou mais**. Coloque a ISO no leitor.
 3. Ligue e escolha **"Instalar o MeuOS neste computador"** no menu.
-4. Siga o instalador: disco, nome, senha e confirme digitando `APAGAR`.
+4. Siga o instalador (veja as opções abaixo) e confirme.
 5. Quando terminar, **retire a ISO** e reinicie. O MeuOS liga direto do disco.
 
 Quer só experimentar? Escolha **"Experimentar o MeuOS sem instalar"**.
 
-> ⚠️ O instalador usa o **disco inteiro** e apaga tudo nele. Ainda não faz dual boot. Em PC de verdade, desligue o **Secure Boot**.
+### Jeitos de instalar
+
+| Opção | Versão | O que faz |
+|---|---|---|
+| **Apagar um disco inteiro** | 1.02 e 1.03 beta | Usa o disco todo. Apaga tudo nele (pede para digitar `APAGAR`) |
+| **Ao lado de outro sistema (Windows)** | 1.03 beta | Usa o maior espaço livre do disco. Não apaga, não formata e não redimensiona nada que já existe |
+| **Em uma partição existente** | 1.03 beta | Só a partição escolhida é formatada |
+| **Particionar na mão (GParted)** | 1.03 beta | Cria, apaga e encolhe partições antes de instalar |
+
+O instalador da 1.03 beta mostra **o que vai fazer antes de mexer em qualquer coisa**.
+
+> ⚠️ **Faça backup** antes de mexer em partições. O dual boot da 1.03 é beta: foi pensado com cuidado, mas ainda foi pouco testado em PCs diferentes.
+> Para instalar ao lado do Windows são necessários **12 GB livres seguidos** (use o GParted para encolher a partição do Windows).
+> Em PC de verdade, desligue o **Secure Boot** (e o **BitLocker** do Windows, se for encolher a partição dele).
 
 ---
 
@@ -81,7 +99,11 @@ foreachSch (v inBin lista) {
 }
 ```
 
-Referência completa dentro do sistema: `/usr/share/meuos/FloopyC.md`. Rodar: `floopyc arquivo.flp`.
+📖 **Guia completo da linguagem, do zero, com exemplos:** [`docs/index.md`](docs/index.md)
+🌐 **Site:** <https://heitorcoser.github.io/FloppaOS/>
+
+Dentro do sistema: `floopyc arquivo.flp` roda um programa, `floopyc --check arquivo.flp` confere a sintaxe,
+e o **Floppa Studio** cria programas a partir de modelos. Referência em texto: `/usr/share/meuos/FloopyC.md`.
 
 ---
 
@@ -93,6 +115,7 @@ Esta pasta também funciona como servidor de atualizações e de conteúdo adici
 |---|---|---|
 | `update/` | Atualizações assinadas (Ed25519) do Floppa Update | `/etc/meuos/repo-update` |
 | `extras/` | Catálogo de conteúdo adicional (FloppyMakes e outros) | `/etc/meuos/repo-extras` |
+| `docs/` | Guia e site da linguagem FloopyC | — |
 
 Endereços usados dentro do MeuOS:
 
@@ -109,9 +132,11 @@ Quer publicar conteúdo para o MeuOS? Veja [`extras/README.md`](extras/README.md
 
 | Versão | Novidades |
 |---|---|
+| **1.03 beta** | Instalador ao lado do Windows (dual boot), em partição existente, GParted, escolha do nome de usuário, plano mostrado antes de mexer no disco |
 | **1.02** | Instalador no disco, Floppa Otimizer, notas de atualização, servidor de extras no GitHub |
 | 1.02 beta | Otimização, Floppa Update, Python/JavaScript, Wine, FloppyMakes |
 | 1.01 | Tela de carregamento e melhorias gerais |
+| 1.0 beta | Som e voz, Floppa Studio, pasta compartilhada com o Windows |
 | 0.3 | Troca de fundo, FloopyC e jogos |
 | 0.2 | Desktop XFCE sobre Debian, ISO live |
 | 0.1 | Kernel Linux + BusyBox |
