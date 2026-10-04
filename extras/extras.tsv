@@ -1,0 +1,4 @@
+# id|nome|tipo|versao|arquivo|sha256|tamanho|descricao
+# Uma linha por conteudo. O arquivo .tar.gz fica nesta mesma pasta.
+# Exemplo (descomente depois de subir o pacote):
+# floppymakes|FloppyMakes|World|1.0|floppymakes-1.0.tar.gz|SHA256_DO_ARQUIVO|TAMANHO_EM_BYTES|Descricao curta.
