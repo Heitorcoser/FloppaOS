@@ -43,12 +43,17 @@ Notas da versão beta: [`NOTAS-DE-ATUALIZACAO-1.03-beta.md`](NOTAS-DE-ATUALIZACA
 | 💾 | **Instalador**: instala no disco do computador (BIOS e UEFI). O CD serve só para instalar |
 | 🪟 | **Ao lado do Windows** *(1.03 beta)*: instala no espaço livre do disco, sem apagar nada, e o GRUB oferece o Windows no menu |
 | 🧩 | **GParted** *(1.03 beta)*: crie, apague e encolha partições antes de instalar |
+| 👤 | **Seu nome e seu usuário** *(1.03 beta)*: você escolhe nome, usuário, nome do computador e senha na instalação |
+| 🎮 | **Floppa Games** *(1.03 beta)*: instala a **Steam** com um clique, com Vulkan, OpenGL, Proton, GameMode e MangoHud |
+| 📺 | **Drivers de vídeo reais** *(1.03 beta)*: AMD, Intel e NVIDIA livre, com vídeo acelerado por hardware |
+| 🎬 | **Codecs completos** *(1.03 beta)*: o Firefox toca vídeos do YouTube e similares |
+| 🕹️ | **Controles** *(1.03 beta)*: Xbox, PlayStation e Steam funcionam |
 | ⚡ | **Floppa Otimizer**: ajusta o sistema conforme a memória, o processador, o vídeo e o disco |
 | 🔄 | **Floppa Update**: o sistema se atualiza sozinho, com pacotes assinados |
 | 📦 | **Conteúdo adicional**: baixe extras como o **FloppyMakes** |
 | 🐍 | **Python**, **JavaScript** (Node) e **FloopyC** prontos para usar |
 | 🍷 | **Wine**: roda programas e jogos do Windows (`.exe`) |
-| 🎮 | Jogos feitos em FloopyC: cobra, adivinha o número, pedra-papel-tesoura, peixes, piano |
+| 🐟 | Jogos feitos em FloopyC: cobra, adivinha o número, pedra-papel-tesoura, peixes, piano |
 | 🔊 | **Som e voz**: o FloopyC toca notas e fala em voz alta |
 | 🖼️ | Troca de **tela de fundo** e **histórico de versões** dentro do sistema |
 
@@ -73,11 +78,34 @@ Quer só experimentar? Escolha **"Experimentar o MeuOS sem instalar"**.
 | **Em uma partição existente** | 1.03 beta | Só a partição escolhida é formatada |
 | **Particionar na mão (GParted)** | 1.03 beta | Cria, apaga e encolhe partições antes de instalar |
 
-O instalador da 1.03 beta mostra **o que vai fazer antes de mexer em qualquer coisa**.
+O instalador da 1.03 beta pergunta o seu **nome**, o **usuário**, o **nome do computador** e a **senha**, e mostra **o que vai fazer antes de mexer em qualquer coisa**.
 
 > ⚠️ **Faça backup** antes de mexer em partições. O dual boot da 1.03 é beta: foi pensado com cuidado, mas ainda foi pouco testado em PCs diferentes.
 > Para instalar ao lado do Windows são necessários **12 GB livres seguidos** (use o GParted para encolher a partição do Windows).
-> Em PC de verdade, desligue o **Secure Boot** (e o **BitLocker** do Windows, se for encolher a partição dele).
+> No Windows, desligue a **Inicialização rápida** e **desligue** o PC por completo antes de instalar.
+> Em PC de verdade, desligue o **Secure Boot** (e suspenda o **BitLocker** do Windows, se for encolher a partição dele).
+
+---
+
+## 🎮 Jogar *(1.03 beta)*
+
+O MeuOS 1.03 beta traz o que os jogos de PC precisam: drivers de vídeo **AMD** (amdgpu, radeon), **Intel** (i915) e **NVIDIA livre** (nouveau), **Vulkan**, **OpenGL (Mesa)**, vídeo acelerado por hardware (VA-API), **GameMode** e **MangoHud**.
+
+**Como jogar:**
+
+1. **Instale o MeuOS no computador.** Pelo CD tudo fica na memória RAM e some ao desligar.
+2. Abra **Floppa Games > Instalar a Steam**. Precisa de internet e de uns 3 GB livres.
+3. Abra a Steam, entre na sua conta e ligue **Steam Play para todos os títulos** (Proton).
+4. Nas opções de inicialização do jogo, coloque: `gamemoderun mangohud %command%`
+
+O **Floppa Games** também mostra o diagnóstico da placa de vídeo (OpenGL, Vulkan e VA-API) e traz dicas.
+
+**Limites da beta:**
+
+- Para jogos 3D de verdade, use placa **AMD ou Intel**. NVIDIA só com o driver livre (não há o driver proprietário).
+- Em máquina virtual (VirtualBox, QEMU) os jogos 3D rodam pelo processador e ficam muito lentos.
+- Recomendado: 8 GB de RAM e processador de 4 núcleos.
+- Jogos com anti-cheat do Windows geralmente não funcionam no Linux.
 
 ---
 
@@ -132,7 +160,7 @@ Quer publicar conteúdo para o MeuOS? Veja [`extras/README.md`](extras/README.md
 
 | Versão | Novidades |
 |---|---|
-| **1.03 beta** | Instalador ao lado do Windows (dual boot), em partição existente, GParted, escolha do nome de usuário, plano mostrado antes de mexer no disco |
+| **1.03 beta** | **Floppa Games** (Steam, drivers de vídeo, Vulkan, codecs, controles), instalador ao lado do Windows (dual boot), em partição existente, GParted, escolha de nome e usuário, plano mostrado antes de mexer no disco |
 | **1.02** | Instalador no disco, Floppa Otimizer, notas de atualização, servidor de extras no GitHub |
 | 1.02 beta | Otimização, Floppa Update, Python/JavaScript, Wine, FloppyMakes |
 | 1.01 | Tela de carregamento e melhorias gerais |
