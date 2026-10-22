@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Mosca Pilota</title>
+<style>
+/* Layout: barra de status no topo, pista no centro, cérebro ao vivo embaixo, controles no rodapé */
+:root{
+  --bg:#10140e; --panel:#181e15; --line:#2b3424; --track:#d8ceb2; --wall:#262d20;
+  --fg:#eef0e6; --dim:#9aa38c; --amber:#ffb000; --cyan:#4fd1ff; --red:#ff5d4a;
+  --display:ui-rounded,"SF Pro Rounded","Segoe UI",Roboto,system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,"Roboto Mono",monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:var(--display);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+#app{height:100%;display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top,0px) + 8px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(12px,env(safe-area-inset-left,0px));gap:8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{margin:0;font-size:20px;font-weight:900;letter-spacing:-.01em;line-height:1}
+h1 span{color:var(--amber)}
+#about{background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;font:700 12px var(--display);padding:7px 12px}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.chip small{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--dim)}
+.chip b{font:700 17px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lvl{color:var(--amber)}
+.stage{position:relative;flex:1 1 auto;min-height:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--wall)}
+#world{position:absolute;inset:0;width:100%;height:100%;display:block}
+#toast{position:absolute;left:10px;right:10px;top:10px;text-align:center;font-weight:900;font-size:clamp(16px,5vw,24px);text-shadow:0 2px 0 #000;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s;pointer-events:none}
+#toast.show{opacity:1;transform:none}
+#toast.up{color:var(--amber)}
+.brainbox{position:relative;height:27%;min-height:150px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--panel)}
+#brain{position:absolute;inset:0;width:100%;height:100%;display:block}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+button.b{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:12px;padding:13px 8px;font:800 14px var(--display);cursor:pointer}
+button.b.on{background:var(--amber);color:#1a1300;border-color:var(--amber)}
+button.b.warn{color:var(--red)}
+button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.sheet{position:fixed;inset:0;background:rgba(5,7,4,.75);display:flex;align-items:flex-end;justify-content:center;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));z-index:5}
+.card{width:100%;max-width:460px;max-height:85%;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.card h2{margin:0;font-size:22px;font-weight:900}
+.card p{margin:0;line-height:1.45;color:#d7dccb}
+.card .row{display:flex;gap:8px}
+.card .row button{flex:1}
+.k{font-family:var(--mono);color:var(--amber)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Mosca <span>Pilota</span></h1>
+    <button id="about" type="button">Sobre o cérebro</button>
+  </header>
+  <div class="chips">
+    <div class="chip"><small>NÍVEL</small><b id="lvl">1</b></div>
+    <div class="chip"><small>GERAÇÃO</small><b id="gen">1</b></div>
+    <div class="chip"><small>VIVAS</small><b id="alive">24</b></div>
+    <div class="chip"><small>RECORDE</small><b id="rec">0%</b></div>
+  </div>
+  <div class="stage"><canvas id="world"></canvas><div id="toast"></div></div>
+  <div class="brainbox"><canvas id="brain" aria-label="Atividade dos neurônios da mosca líder"></canvas></div>
+  <div class="controls">
+    <button class="b" id="pause" type="button">Pausar</button>
+    <button class="b" id="turbo" type="button">Turbo</button>
+    <button class="b warn" id="reset" type="button">Do zero</button>
+  </div>
+</div>
+
+<div class="sheet" id="aboutSheet" hidden>
+  <div class="card">
+    <h2>O cérebro da mosca</h2>
+    <p>Cada mosca usa um pedaço real do conectoma do sistema nervoso central da mosca-da-fruta macho (<b>maleCNS</b>, Janelia FlyEM e Cambridge).</p>
+    <p>São <span class="k" id="nN">0</span> neurônios e <span class="k" id="nE">0</span> conexões: neurônios visuais dos dois olhos, interneurônios do cérebro e neurônios descendentes, que mandam comandos para o corpo. Entrou todo caminho de até 3 sinapses entre olho e neurônio descendente.</p>
+    <p>As ligações e o número de sinapses vêm do conectoma e não mudam. A evolução ajusta só <span class="k" id="nG">0</span> botões: se cada família de neurônio excita ou inibe, o ganho de cada um dos 15 raios de visão, quanto ela sente a própria velocidade, como os neurônios descendentes viram curva e velocidade, e um reflexo visual direto do olho para os músculos (como a fibra gigante das moscas de verdade, que faz a mosca desviar rápido).</p>
+    <p>Os obstáculos mudam de lugar a cada geração, então ela precisa aprender a desviar, e não decorar a pista. Para subir de nível, precisa chegar ao fim duas vezes seguidas.</p>
+    <p>Cada geração tem 24 moscas. As que vão mais longe viram pais da próxima. Quando uma cruza a chegada, você sobe de nível: a pista nova é sorteada, mais longa, mais estreita, com mais curvas e obstáculos.</p>
+    <p>No painel de baixo: âmbar é neurônio ativado, azul é inibido. Olho esquerdo à esquerda, olho direito à direita, neurônios descendentes embaixo.</p>
+    <button class="b on" id="closeAbout" type="button">Fechar</button>
+  </div>
+</div>
+<div class="sheet" id="resetSheet" hidden>
+  <div class="card">
+    <h2>Recomeçar do zero?</h2>
+    <p>Todo o treino é apagado. As moscas voltam a nascer com cérebros aleatórios no nível 1.</p>
+    <div class="row"><button class="b" id="noReset" type="button">Cancelar</button><button class="b on" id="yesReset" type="button">Apagar e recomeçar</button></div>
+  </div>
+</div>
+
+<script src="brain.js"></script>
+<script src="core.js"></script>
+<script>
+(()=>{
+'use strict';
+const M=window.MoscaCore,brain=M.buildBrain(window.BRAIN),$=id=>document.getElementById(id);
+const KEY='mosca.pilota.v1';
+let ev=new M.Evolution(brain,{pop:24});
+let cerebroNovo=0;
+try{const s=localStorage.getItem(KEY);if(s&&!ev.load(s)){ev=new M.Evolution(brain,{pop:24});cerebroNovo=1}}catch(e){}
+$('nN').textContent=brain.N;$('nE').textContent=brain.E;$('nG').textContent=brain.nGenes;
+let rec=0;for(const h of ev.history)rec=Math.max(rec,h.level*100+h.best*100);
+
+/* ---------- telas ---------- */
+const wc=$('world'),wx=wc.getContext('2d'),bc=$('brain'),bx=bc.getContext('2d');
+let dpr=1;
+function fit(c,x){const r=c.getBoundingClientRect();c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);x.setTransform(dpr,0,0,dpr,0,0);return r}
+let WR,BR;
+function resize(){dpr=Math.min(2,devicePixelRatio||1);WR=fit(wc,wx);BR=fit(bc,bx);layoutBrain()}
+addEventListener('resize',resize);
+
+/* ---------- pista pré-desenhada ---------- */
+let trackImg=null,trackScale=1;
+function renderTrack(){
+  const T=ev.track,ww=T.gw*M.CELL,wh=T.gh*M.CELL;
+  trackScale=Math.min(3,2048/Math.max(ww,wh));
+  const c=document.createElement('canvas');c.width=Math.ceil(ww*trackScale);c.height=Math.ceil(wh*trackScale);
+  const x=c.getContext('2d');x.scale(trackScale,trackScale);x.translate(-T.minX,-T.minY);
+  x.lineCap='round';x.lineJoin='round';
+  const path=()=>{x.beginPath();T.c.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]))};
+  path();x.strokeStyle='#4a5640';x.lineWidth=T.width+5;x.stroke();
+  path();x.strokeStyle='#d8ceb2';x.lineWidth=T.width;x.stroke();
+  path();x.setLineDash([6,10]);x.strokeStyle='rgba(40,50,30,.18)';x.lineWidth=1.2;x.stroke();x.setLineDash([]);
+  // corta o lado de trás da largada
+  const a=T.c[0],h=T.startH;
+  x.save();x.translate(a[0],a[1]);x.rotate(h);x.fillStyle='#262d20';x.fillRect(-T.width*1.6,-T.width,T.width*1.6-6,T.width*2);
+  x.fillStyle='#ffb000';x.fillRect(-6,-T.width/2,3,T.width);x.restore();
+  for(const o of T.obs){x.fillStyle='#3a2f22';x.beginPath();x.arc(o.x,o.y,o.r,0,Math.PI*2);x.fill();x.strokeStyle='#ff5d4a';x.lineWidth=1.2;x.stroke()}
+  // chegada xadrez
+  const n=T.c.length,b=T.c[n-1],pb=T.c[n-2],ang=Math.atan2(b[1]-pb[1],b[0]-pb[0]);
+  x.save();x.translate(b[0],b[1]);x.rotate(ang);const sq=T.width/8;
+  for(let i=0;i<8;i++)for(let j=0;j<2;j++){x.fillStyle=(i+j)%2?'#111':'#f6f3ea';x.fillRect(-sq*2+j*sq,-T.width/2+i*sq,sq,sq)}
+  x.restore();
+  trackImg=c;
+}
+
+/* ---------- câmera e desenho do mundo ---------- */
+let cam={x:0,y:0,z:1},leader=null;
+function pickLeader(){let b=null;for(const f of ev.flies)if(f.alive&&(!b||f.prog>b.prog))b=f;if(b)leader=b;else if(!leader||!ev.flies.includes(leader))leader=ev.flies[0]}
+function drawFly(x,f,s,isLeader){
+  x.save();x.translate(f.x,f.y);x.rotate(f.h);x.scale(s,s);
+  const wa=Math.sin(f.wing)*.5;
+  x.fillStyle=isLeader?'rgba(210,235,255,.75)':'rgba(210,235,255,.35)';
+  for(const sd of[-1,1]){x.save();x.rotate(sd*(1.9+wa));x.beginPath();x.ellipse(4,0,5,2.2,0,0,Math.PI*2);x.fill();x.restore()}
+  x.fillStyle=isLeader?'#3b2a14':'#2a2018';x.beginPath();x.ellipse(-1.5,0,4,2.4,0,0,Math.PI*2);x.fill();
+  x.fillStyle=isLeader?'#5a3f1c':'#3b2c1c';x.beginPath();x.ellipse(2.5,0,1.8,2,0,0,Math.PI*2);x.fill();
+  x.fillStyle=isLeader?'#ff3b2f':'#8c2a20';x.beginPath();x.arc(4,-1.4,1.1,0,Math.PI*2);x.arc(4,1.4,1.1,0,Math.PI*2);x.fill();
+  x.restore();
+}
+function drawWorld(){
+  const W=WR.width,H=WR.height,T=ev.track;
+  if(leader){cam.x+=(leader.x-cam.x)*.15;cam.y+=(leader.y-cam.y)*.15}
+  const z=Math.min(W,H)/(T.width*3.2);cam.z+=(z-cam.z)*.1;
+  wx.fillStyle='#262d20';wx.fillRect(0,0,W,H);
+  wx.save();wx.translate(W/2,H/2);wx.scale(cam.z,cam.z);wx.translate(-cam.x,-cam.y);
+  wx.imageSmoothingEnabled=true;
+  wx.drawImage(trackImg,T.minX,T.minY,trackImg.width/trackScale,trackImg.height/trackScale);
+  if(leader&&leader.alive){
+    wx.lineWidth=.8/cam.z*1.5;
+    M.RAYS.forEach((a,k)=>{const d=leader.ray[k],p=1-d/M.RAY_RANGE;wx.strokeStyle=`rgba(79,209,255,${.15+.5*p})`;wx.beginPath();wx.moveTo(leader.x,leader.y);wx.lineTo(leader.x+Math.cos(leader.h+a)*d,leader.y+Math.sin(leader.h+a)*d);wx.stroke()});
+  }
+  for(const f of ev.flies)if(f!==leader&&f.alive)drawFly(wx,f,1,false);
+  if(leader)drawFly(wx,leader,1.25,true);
+  wx.restore();
+  // barra de progresso
+  const p=leader?leader.prog/T.total:0;
+  wx.fillStyle='rgba(0,0,0,.45)';wx.fillRect(10,H-16,W-20,6);wx.fillStyle='#ffb000';wx.fillRect(10,H-16,(W-20)*Math.min(1,p),6);
+}
+
+/* ---------- cérebro ao vivo ---------- */
+let npos=null;
+function layoutBrain(){
+  const r=M.rng(3),W=BR.width,H=BR.height;npos=new Float32Array(brain.N*2);
+  for(let i=0;i<brain.N;i++){
+    const pa=brain.papel[i],ld=brain.lado[i];let x,y;
+    if(pa===1){x=ld===0?lerp(.02,.2,r()):lerp(.8,.98,r());y=lerp(.06,.62,r())}
+    else if(pa===2){x=ld===0?lerp(.08,.46,r()):ld===1?lerp(.54,.92,r()):lerp(.47,.53,r());y=lerp(.72,.8,r())}
+    else{x=ld===0?lerp(.24,.48,r()):ld===1?lerp(.52,.76,r()):lerp(.45,.55,r());y=lerp(.08,.6,r())}
+    npos[i*2]=x*W;npos[i*2+1]=y*H;
+  }
+}
+const lerp=(a,b,t)=>a+(b-a)*t;
+function drawBrain(){
+  const W=BR.width,H=BR.height;bx.fillStyle='#181e15';bx.fillRect(0,0,W,H);
+  bx.font='800 9px ui-rounded,system-ui,sans-serif';bx.fillStyle='#9aa38c';bx.textBaseline='top';
+  bx.textAlign='left';bx.fillText('OLHO ESQ.',6,4);bx.textAlign='right';bx.fillText('OLHO DIR.',W-6,4);bx.textAlign='center';bx.fillText('CÉREBRO',W/2,4);bx.fillText('NEURÔNIOS DESCENDENTES',W/2,H*.65);
+  if(!leader)return;
+  const x=leader.ctrl.x;
+  for(let i=0;i<brain.N;i++){
+    const v=x[i],a=Math.min(1,Math.abs(v)*1.6);
+    bx.fillStyle=a<.05?'#2b3424':v>0?`rgba(255,176,0,${.25+.75*a})`:`rgba(79,209,255,${.25+.75*a})`;
+    const s=brain.papel[i]===2?3:2;bx.fillRect(npos[i*2],npos[i*2+1],s,s);
+  }
+  // saídas motoras
+  const y=H*.86,cx=W/2,sw=W*.32;
+  bx.fillStyle='#2b3424';bx.fillRect(cx-sw,y,sw*2,6);
+  bx.fillStyle='#ffb000';const st=leader.steer;bx.fillRect(st<0?cx+st*sw:cx,y,Math.abs(st)*sw,6);
+  bx.fillStyle='#eef0e6';bx.fillRect(cx-1,y-3,2,12);
+  bx.fillStyle='#9aa38c';bx.textAlign='left';bx.fillText('◀ VIRA',cx-sw,y+9);bx.textAlign='right';bx.fillText('VIRA ▶',cx+sw,y+9);
+  const tx=W-14;bx.fillStyle='#2b3424';bx.fillRect(tx,H*.7,6,H*.25);bx.fillStyle='#4fd1ff';const th=leader.thrust*H*.25;bx.fillRect(tx,H*.95-th,6,th);
+  bx.save();bx.translate(tx-3,H*.83);bx.rotate(-Math.PI/2);bx.textAlign='center';bx.textBaseline='bottom';bx.fillStyle='#9aa38c';bx.fillText('VOO',0,0);bx.restore();
+  // histórico do melhor por geração
+  const hs=ev.history.slice(-60);if(hs.length>1){const gx=8,gy=H*.86,gw=W*.13,gh=H*.11;bx.strokeStyle='#ffb000';bx.lineWidth=1.2;bx.beginPath();hs.forEach((h,k)=>{const px=gx+gw*k/(hs.length-1),py=gy+gh-gh*Math.min(1,h.best);k?bx.lineTo(px,py):bx.moveTo(px,py)});bx.stroke();bx.textAlign='left';bx.textBaseline='top';bx.fillStyle='#9aa38c';bx.fillText('MELHOR',gx,gy-11)}
+}
+
+/* ---------- mensagens ---------- */
+let toastT=0;
+function toast(t,up){const e=$('toast');e.textContent=t;e.className='show'+(up?' up':'');toastT=up?2.6:1.4}
+
+/* ---------- loop ---------- */
+let paused=false,turbo=false,acc=0,last=performance.now();
+function onGenEnd(){
+  const r=ev.lastResult;
+  rec=Math.max(rec,r.level*100+r.best*100);
+  if(r.levelUp)toast(`Chegou! Nível ${ev.level}: pista nova e mais difícil`,true);
+  else if(r.quase)toast('Chegou! Agora de novo, com os obstáculos em outro lugar',true);
+  else toast(`Geração ${r.gen}: melhor foi ${Math.round(r.best*100)}% da pista`);
+  // os obstáculos mudam de lugar a cada geração
+  if(r.levelUp||ev.obsMudou){ev.obsMudou=false;renderTrack()}
+  try{localStorage.setItem(KEY,ev.save())}catch(e){}
+}
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(!paused){
+    if(turbo){const t0=performance.now();while(performance.now()-t0<14){if(ev.step())onGenEnd()}}
+    else{acc+=dt;let n=0;while(acc>=1/30&&n<4){acc-=1/30;n++;if(ev.step())onGenEnd()}}
+  }
+  pickLeader();drawWorld();drawBrain();
+  $('lvl').textContent=ev.level;$('gen').textContent=ev.gen;$('alive').textContent=ev.flies.filter(f=>f.alive).length+'/'+ev.flies.length;
+  $('rec').textContent='N'+Math.floor(rec/100)+' '+Math.round(rec%100)+'%';
+  if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').className=''}
+  requestAnimationFrame(frame);
+}
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Continuar':'Pausar';$('pause').classList.toggle('on',paused)};
+$('turbo').onclick=()=>{turbo=!turbo;$('turbo').classList.toggle('on',turbo)};
+$('reset').onclick=()=>{$('resetSheet').hidden=false};
+$('noReset').onclick=()=>{$('resetSheet').hidden=true};
+$('yesReset').onclick=()=>{try{localStorage.removeItem(KEY)}catch(e){}ev=new M.Evolution(brain,{pop:24});rec=0;leader=null;renderTrack();$('resetSheet').hidden=true;toast('Moscas novas, cérebros aleatórios')};
+$('about').onclick=()=>{$('aboutSheet').hidden=false};
+$('closeAbout').onclick=()=>{$('aboutSheet').hidden=true};
+document.addEventListener('visibilitychange',()=>{last=performance.now();if(document.hidden){try{localStorage.setItem(KEY,ev.save())}catch(e){}}});
+
+resize();renderTrack();cam.x=ev.track.c[0][0];cam.y=ev.track.c[0][1];
+toast(cerebroNovo?'Cérebro novo com visão melhor: o treino recomeçou do zero':ev.gen>1?`Treino retomado: geração ${ev.gen}`:'Geração 1: cérebros aleatórios');
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

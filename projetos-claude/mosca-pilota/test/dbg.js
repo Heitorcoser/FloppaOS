@@ -1,0 +1,10 @@
+const M = require('../app/core.js'), brain = M.buildBrain(require('../app/brain.json'));
+const ev = new M.Evolution(brain, { pop: 24, seed: 1 });
+const t0 = Date.now(); while (Date.now() - t0 < 40000) ev.step();
+console.log('nível', ev.level, 'hist', ev.history.slice(-5).map(h => h.best.toFixed(2)).join(' '));
+const g = Float32Array.from(ev.genomes[0]);
+const T = M.makeTrack(6, 1000, { reta: true, obs: [{ s: 0.4, off: 0.95, r: 11 }, { s: 0.46, off: 0, r: 4 }] });
+const e = new M.Evolution(brain, { pop: 3, seed: 5 }); e.genomes = [g, g, g]; e.level = 6; e.track = T; e.fixa = true; e.startGen();
+let fl = e.flies; while (!e.step()) fl = e.flies;
+console.log('obs', T.obs.map(o => o.x.toFixed(0) + ',' + o.y.toFixed(0) + ' r' + o.r), 'total', T.total.toFixed(0));
+console.log(e.lastResult, fl.map(f => `prog ${f.bestProg.toFixed(0)} x${f.x.toFixed(0)} y${f.y.toFixed(0)} v${f.v.toFixed(0)} done ${f.done}`));
