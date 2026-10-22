@@ -4,7 +4,7 @@
 |---|---|---|
 | `mosca-pilota/` | App Android: moscas com cérebro do conectoma maleCNS aprendem a pilotar pistas aleatórias (evolução). v1.1: 15 raios de visão, sente velocidade, reflexo visual direto, obstáculos mudam a cada geração, sobe de nível com 2 chegadas seguidas. | `app/` = jogo (index.html, core.js, brain.js). `data/build_brain.py` gera o cérebro (precisa de conexoes.csv e soma_sides.csv, não incluídos). `test/bench.js` mede o aprendizado. APK: `MoscaPilota.apk`. |
 | `surf3d/` | App Android "Tubo 3D": surf em 3D com Three.js, onda que quebra de verdade. | `app/` = jogo; `Tubo3D.apk`. |
-| `fabrica/` | Rework da Fábrica de Tudo (código separado em `src/js/`, junta com `python3 build.py`). Fábricas novas, progressão, emulador com 23 sistemas, tutorial. | Resultado pronto: `Fabrica_de_Tudo_20.html` (v20: IA com Groq/OmniRoute/OpenRouter/Gemini, resposta ao vivo, planejador de linhas de produção sem IA, teste do código num Worker antes de montar, conversa salva). Testes em `fabrica/test/` (Playwright). |
+| `fabrica/` | Rework da Fábrica de Tudo (código separado em `src/js/`, junta com `python3 build.py`). Fábricas novas, progressão, emulador com 23 sistemas, tutorial. | Resultado pronto: `Fabrica_de_Tudo_21.html` (v21: IA respeita o dinheiro do jogador; IA com Groq/OmniRoute/OpenRouter/Gemini, resposta ao vivo, planejador de linhas de produção sem IA, teste do código num Worker antes de montar, conversa salva). Testes em `fabrica/test/` (Playwright). |
 | `tubo-perfeito/` | Jogo de surf 2D em HTML (artifact). | Abrir `tubo.html`. |
 | `roblox-labirinto/` | Labirinto infinito para Roblox (Luau). `multi/` = 7 scripts com menos de 300 linhas cada. | Colar em ServerScriptService (5 ModuleScripts + 2 Scripts). |
 

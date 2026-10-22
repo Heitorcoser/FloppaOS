@@ -197,12 +197,9 @@ function build(j, xc, xl) {
   if (typeof j == "string") j = pj(j);
   if (j.planejar) return montaPlano(achaItem(String(j.planejar)) || String(j.planejar));
   // aparelhos com preço são pagos, como no catálogo
-  const custo = (j.aparelhos || j.devices || j.dispositivos || []).reduce((s, a) => {
-    const k = nk(a.tipo || a.type),
-      t = T[Object.hasOwn(T, k) ? k : AL[k]];
-    return s + ((t && t.price) || 0);
-  }, 0);
-  if (custo && !pay(custo)) return;
+  const custo = custoBloco(j);
+  if (custo && !pay(custo))
+    return toast(`💸 Esse sistema custa $${custo.toLocaleString("pt-BR")} e você tem $${Math.floor(M).toLocaleString("pt-BR")}`);
   snap();
   (j.remover || []).forEach((i) => D[i] && del(+i));
   (j.editar || []).forEach((e) => {

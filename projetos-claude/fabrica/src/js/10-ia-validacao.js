@@ -93,6 +93,9 @@ function chk(raw) {
       try {
         const j = pj(c),
           ids = new Set();
+        const cu = custoBloco(j);
+        if (!ECO.f && cu > M)
+          E.push(`custa $${cu} e o jogador só tem $${Math.floor(M)}. Use aparelhos mais baratos (veja PREÇOS; Venda $${T.venda.price} em vez de Mercado $${T.mercado.price}) ou diga quanto falta, sem bloco fabrica`);
         if (j.planejar && !achaItem(String(j.planejar)))
           E.push("planejar: item desconhecido. Use um destes: " + Object.keys(ITENS).join(", "));
         (j.aparelhos || j.devices || []).forEach((a, i) => {

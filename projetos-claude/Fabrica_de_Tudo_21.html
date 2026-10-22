@@ -3074,12 +3074,9 @@ function build(j, xc, xl) {
   if (typeof j == "string") j = pj(j);
   if (j.planejar) return montaPlano(achaItem(String(j.planejar)) || String(j.planejar));
   // aparelhos com preço são pagos, como no catálogo
-  const custo = (j.aparelhos || j.devices || j.dispositivos || []).reduce((s, a) => {
-    const k = nk(a.tipo || a.type),
-      t = T[Object.hasOwn(T, k) ? k : AL[k]];
-    return s + ((t && t.price) || 0);
-  }, 0);
-  if (custo && !pay(custo)) return;
+  const custo = custoBloco(j);
+  if (custo && !pay(custo))
+    return toast(`💸 Esse sistema custa $${custo.toLocaleString("pt-BR")} e você tem $${Math.floor(M).toLocaleString("pt-BR")}`);
   snap();
   (j.remover || []).forEach((i) => D[i] && del(+i));
   (j.editar || []).forEach((e) => {
@@ -3700,6 +3697,9 @@ function chk(raw) {
       try {
         const j = pj(c),
           ids = new Set();
+        const cu = custoBloco(j);
+        if (!ECO.f && cu > M)
+          E.push(`custa $${cu} e o jogador só tem $${Math.floor(M)}. Use aparelhos mais baratos (veja PREÇOS; Venda $${T.venda.price} em vez de Mercado $${T.mercado.price}) ou diga quanto falta, sem bloco fabrica`);
         if (j.planejar && !achaItem(String(j.planejar)))
           E.push("planejar: item desconhecido. Use um destes: " + Object.keys(ITENS).join(", "));
         (j.aparelhos || j.devices || []).forEach((a, i) => {
@@ -3847,7 +3847,7 @@ const nkI = (s) =>
     .replace(/[̀-ͯ]/g, "");
 const receitaDe = (it) => Object.keys(RECEITAS).find((k) => RECEITAS[k].out == it);
 const nivelItem = (it) => (BRUTOS.includes(it) ? ITENS[it][2] : RECEITAS[receitaDe(it)].lv);
-function planoFab(alvo) {
+function planoFab(alvo, saida = "mercado") {
   const prof = {}; // item -> distância até o produto final (0 = o próprio)
   const visita = (it, d) => {
     if (prof[it] !== undefined && prof[it] >= d) return;
@@ -3868,14 +3868,21 @@ function planoFab(alvo) {
     return { it, r, m: RECEITAS[r].m, col: 1 + fundo - prof[it] };
   });
   const custo =
-    brutos.length * T.extrator.price + maqs.reduce((s, x) => s + T[x.m].price, 0) + T.mercado.price;
+    brutos.length * T.extrator.price + maqs.reduce((s, x) => s + T[x.m].price, 0) + T[saida].price;
   const falta = ECO.f ? [] : itens.filter((it) => nivelItem(it) > nivel()).map((it) => [it, nivelItem(it)]);
-  return { alvo, brutos, maqs, custo, falta, cols: feitos.length ? fundo + 2 : 1 };
+  return { alvo, saida, brutos, maqs, custo, falta, cols: feitos.length ? fundo + 2 : 1 };
 }
-function montaPlano(alvo) {
+// Mercado paga mais; se o dinheiro não dá, vende na Venda (mais barata)
+function planoMelhor(alvo) {
+  const P = planoFab(alvo);
+  if (ECO.f || P.custo <= M) return P;
+  const V2 = planoFab(alvo, "venda");
+  return V2.custo <= M ? V2 : P;
+}
+function montaPlano(alvo, saida) {
   let P;
   try {
-    P = planoFab(alvo);
+    P = saida ? planoFab(alvo, saida) : planoMelhor(alvo);
   } catch (e) {
     return toast(e.message);
   }
@@ -3883,7 +3890,7 @@ function montaPlano(alvo) {
     const n = Math.max(...P.falta.map((x) => x[1]));
     return toast(`🔒 ${alvo} precisa do nível ${n} (você está no ${nivel()})`);
   }
-  if (!pay(P.custo)) return;
+  if (!pay(P.custo)) return toast(`💸 A linha custa $${P.custo.toLocaleString("pt-BR")} e você tem $${Math.floor(M).toLocaleString("pt-BR")}`);
   snap();
   // monta à direita do que já existe, para não cobrir nada
   const L = Object.values(D),
@@ -3894,7 +3901,7 @@ function montaPlano(alvo) {
     pos = (c) => [ox + c * 270, oy + (lin[c] = (lin[c] || 0) + 1) * 250 - 250];
   P.brutos.forEach((b) => (id[b] = add("extrator", ...pos(0), { res: b })));
   [...P.maqs].sort((a, b) => a.col - b.col).forEach((m) => (id[m.it] = add(m.m, ...pos(m.col), { lv: 1, r: m.r })));
-  const mc = add("mercado", ...pos(P.cols));
+  const mc = add(P.saida, ...pos(P.cols));
   P.maqs.forEach((m) => Object.keys(RECEITAS[m.r].in).forEach((i) => W.push([id[i].id, id[m.it].id])));
   W.push([id[alvo].id, mc.id]);
   wires();
@@ -3931,20 +3938,62 @@ function planoHTML(P, t) {
     ...[...P.maqs]
       .sort((a, b) => a.col - b.col)
       .map((m) => `<div>${T[m.m].i} ${T[m.m].n}: ${esc(txtReceita(RECEITAS[m.r]))}</div>`),
-    `<div>🏪 Mercado vende ${ic(P.alvo)} ${P.alvo} (preço base $${ITENS[P.alvo][1]})</div>`,
+    P.saida == "mercado"
+      ? `<div>🏪 Mercado vende ${ic(P.alvo)} ${P.alvo} (preço base $${ITENS[P.alvo][1]})</div>`
+      : `<div>${T.venda.i} Venda vende ${ic(P.alvo)} ${P.alvo} por $${ITENS[P.alvo][1]} (o Mercado paga mais, mas custa $${T.mercado.price}; troque depois)</div>`,
   ];
   const k = PEDS.push(t) - 1,
     bloq = P.falta.length
       ? `<div class="nota av">🔒 Precisa do nível ${Math.max(...P.falta.map((x) => x[1]))} (você está no ${nivel()}): ${P.falta.map((x) => x[0]).join(", ")}</div>`
-      : "";
-  return `${cab}<div class=plano>${lin.join("")}</div>${bloq}<div style="display:flex;gap:6px;margin-top:6px"><button class=it style="flex:1;padding:6px" onclick="montaPlano(${JSON.stringify(P.alvo).replace(/"/g, "&quot;")})"${P.falta.length ? " disabled" : ""}>🏗 Montar${ECO.f ? "" : " ($" + P.custo.toLocaleString("pt-BR") + ")"}</button><button class=it style="flex:1;padding:6px" onclick="ask(PEDS[${k}],1)">🤖 Perguntar à IA</button></div><div class=nota>Dica: depois toque em ⬆ Nível na máquina que mais demora.</div>`;
+      : !ECO.f && P.custo > M
+        ? `<div class="nota av">💸 Custa $${P.custo.toLocaleString("pt-BR")} e você tem $${Math.floor(M).toLocaleString("pt-BR")}. Faltam $${(P.custo - Math.floor(M)).toLocaleString("pt-BR")}. Peça "algo barato" para ver o que cabe no seu dinheiro.</div>`
+        : "";
+  return `${cab}<div class=plano>${lin.join("")}</div>${bloq}<div style="display:flex;gap:6px;margin-top:6px"><button class=it style="flex:1;padding:6px" onclick="montaPlano(${JSON.stringify(P.alvo).replace(/"/g, "&quot;")},'${P.saida}')"${P.falta.length ? " disabled" : ""}>🏗 Montar${ECO.f ? "" : " ($" + P.custo.toLocaleString("pt-BR") + ")"}</button><button class=it style="flex:1;padding:6px" onclick="ask(PEDS[${k}],1)">🤖 Perguntar à IA</button></div><div class=nota>Dica: depois toque em ⬆ Nível na máquina que mais demora.</div>`;
+}
+// "algo barato", "tenho pouco dinheiro": lista as linhas que cabem no dinheiro, com lucro por minuto
+function pedidoBarato(t) {
+  const n = nkI(t);
+  if (!/barat|pouco dinheiro|sem dinheiro|pouca grana|economic|cabe no (meu )?dinheiro|o que (da|posso) (pra |para )?(montar|fazer|construir)|o que construir/.test(n)) return false;
+  addMsg("u", t);
+  const op = Object.keys(ITENS)
+    .map((it) => {
+      try {
+        const P = planoMelhor(it);
+        if (P.falta.length || (!ECO.f && P.custo > M)) return null;
+        // ganho aproximado por minuto: preço × ritmo da máquina final (ou do extrator)
+        const r = RECEITAS[receitaDe(it)],
+          seg = r ? r.t / 1000 / r.q : 1.5 * (RITMO[it] || 1);
+        return { P, ganho: Math.round((ITENS[it][1] * 60) / seg) };
+      } catch (e) {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.ganho - a.ganho)
+    .slice(0, 4);
+  const m = document.createElement("div");
+  m.className = "msg";
+  m.innerHTML = op.length
+    ? `💰 Com $${Math.floor(M).toLocaleString("pt-BR")} cabem estas linhas (calculei aqui, sem gastar IA):<div class=plano>${op
+        .map(
+          ({ P, ganho }) =>
+            `<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">${ic(P.alvo)} <b>${P.alvo}</b>: $${P.custo} · ~$${ganho}/min</span><button class=it style="padding:4px 10px" onclick="montaPlano(${JSON.stringify(P.alvo).replace(/"/g, "&quot;")},'${P.saida}')">🏗 Montar</button></div>`,
+        )
+        .join("")}</div><div class=nota>O ganho é aproximado. Venda os itens para juntar dinheiro e liberar linhas maiores.</div>`
+    : `💸 Com $${Math.floor(M)} ainda não dá para montar uma linha (a mais barata custa $${T.extrator.price + T.venda.price}). Cumpra uma missão em 🎯 ou venda algo para juntar dinheiro.`;
+  $("#msgs").append(m);
+  $("#msgs").scrollTop = 1e6;
+  HIST.push({ role: "user", content: t }, { role: "assistant", content: "Linhas que cabem no dinheiro: " + op.map((x) => x.P.alvo + " $" + x.P.custo).join(", ") + ". (planejador local)" });
+  guardaChat();
+  return true;
 }
 function pedidoLocal(t) {
+  if (pedidoBarato(t)) return true;
   const it = itemPedido(t);
   if (!it) return false;
   let P;
   try {
-    P = planoFab(it);
+    P = planoMelhor(it);
   } catch (e) {
     return false;
   }
@@ -4059,6 +4108,21 @@ async function testaResposta(raw) {
   return { E, ok };
 }
 
+const precos = () =>
+  Object.entries(T)
+    .filter(([, t]) => t.price)
+    .sort((a, b) => a[1].price - b[1].price)
+    .map(([k, t]) => k + " $" + t.price)
+    .join(", ");
+// Quanto custa montar um bloco fabrica
+function custoBloco(j) {
+  return (j.aparelhos || j.devices || j.dispositivos || []).reduce((s, a) => {
+    const k = nk(a.tipo || a.type),
+      t = T[Object.hasOwn(T, k) ? k : AL[k]];
+    return s + ((t && t.price) || 0);
+  }, 0);
+}
+
 /* -- Mais contexto para a IA: aparelhos que faltavam na lista, jogador e atalhos -- */
 const FABK = ["extrator", "divisor", "filtroitem", "armazem", "mercado", "contrato", "venda", "mina", "fabrica", "montadora"];
 function contextoExtra() {
@@ -4069,7 +4133,9 @@ function contextoExtra() {
     .map(([k, t]) => k + " (" + t.n + (t.price ? ", $" + t.price : "") + (t.s && Object.keys(t.s).length ? ", s:" + JSON.stringify(t.s) : "") + ")")
     .join("; ");
   return `\nOUTROS APARELHOS (tipo (nome, preço, configurações padrão)): ${outros}.
-JOGADOR: nível ${nivel()}, dinheiro $${Math.floor(M)}${ECO.f ? " (modo livre: tudo grátis)" : ""}. Aparelhos com preço são pagos do dinheiro do jogador quando você monta.
+JOGADOR: nível ${nivel()}, dinheiro $${Math.floor(M)}${ECO.f ? " (modo livre: tudo grátis)" : ""}.
+PREÇOS dos aparelhos pagos: ${precos()}. Os outros aparelhos são grátis.
+${ECO.f ? "" : `ORÇAMENTO (OBRIGATÓRIO): a soma dos preços dos aparelhos que você montar NÃO pode passar de $${Math.floor(M)}. Some antes de responder e escreva o total. Se não couber, diga quanto falta e ofereça a opção mais barata (ex: Extrator $${T.extrator.price} + Venda $${T.venda.price}; a Venda é bem mais barata que o Mercado). O app recusa sistemas mais caros que o dinheiro.`}
 LINHA DE PRODUÇÃO COMPLETA: para montar tudo que faz um item, responda só com o bloco fabrica {"planejar":"nome do item"}. O app calcula extratores, máquinas, receitas e fios certos.
 EXPLICAR OU ANALISAR o projeto: use o PROJETO ATUAL e responda em tópicos curtos, sem blocos de código, citando os aparelhos pelo id (#3).
 TESTE: o app roda seu JavaScript simulando 60 tiques do Timer e os botões; se der erro ou não desenhar nada, você recebe o erro para corrigir.\n`;

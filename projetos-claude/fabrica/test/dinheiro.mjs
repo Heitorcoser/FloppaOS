@@ -1,0 +1,16 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const p = await b.newPage({ viewport: { width: 400, height: 800 } }); const errs = []; p.on('pageerror', e => errs.push(e.message));
+await p.goto('file://' + process.argv[2]); await p.waitForTimeout(500);
+await p.evaluate(() => { localStorage.setItem('fabtut','feito'); tutFim(); reset(); ECO.f = 0; M = 315; PROG.xp = 99999; });
+console.log('nível', await p.evaluate(() => nivel()));
+await p.evaluate(() => { aiToggle(); ask('Preciso de algo barato'); });
+console.log(await p.evaluate(() => [...document.querySelectorAll('#msgs .msg')].pop().innerText.replace(/\n+/g, ' | ')));
+console.log('chk caro:', await p.evaluate(() => chk('```fabrica\n{"aparelhos":[{"id":1,"tipo":"extrator","s":{"res":"minério"}},{"id":2,"tipo":"oficina","s":{"r":"peca"}},{"id":3,"tipo":"mercado"}],"fios":[[1,2],[2,3]]}\n```')));
+await p.evaluate(() => ask('monte uma linha de móveis'));
+console.log(await p.evaluate(() => [...document.querySelectorAll('#msgs .msg')].pop().innerText.replace(/\n+/g, ' | ')));
+await p.evaluate(() => [...document.querySelectorAll('#msgs .msg button')].filter(x => /Montar/.test(x.textContent)).pop().click());
+console.log('montou:', await p.evaluate(() => Object.values(D).map(d => d.type).join(',') + ' | sobrou $' + Math.floor(M)));
+console.log('sys:', await p.evaluate(() => /ORÇAMENTO[^\n]{0,90}/.exec(mkSys())[0]));
+await p.screenshot({ path: process.argv[3] });
+console.log(errs.length ? 'ERROS: ' + errs : 'SEM ERROS'); await b.close();
