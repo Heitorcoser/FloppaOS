@@ -35,8 +35,50 @@
   const tela = () => document.querySelector(root.EJS_player + ' canvas');
   function aperta(i, v) { const g = em(); if (g) g.simulateInput(0, i, v); }
   const toque = (i, ms = 160) => { aperta(i, 1); setTimeout(() => aperta(i, 0), ms); };
-  // START, A, A, A: sai da demonstração, cria a nota, escolhe a dificuldade e começa
-  function comeca() { [BT.START, BT.A, BT.A, BT.A].forEach((b, k) => setTimeout(() => toque(b), 600 + k * 2600)); }
+  // Entra no jogo sozinho olhando a tela: espera o aviso legal sumir, aperta START na
+  // demonstração e A nos menus (nota do controller pak, dificuldade) até aparecer o HUD.
+  function amostraTela(y0, y1, x0, x1) {
+    const c = tela(); if (!c || !c.width) return null;
+    ax.drawImage(c, 0, 0, 64, 40);
+    return ax.getImageData(x0, y0, x1 - x0, y1 - y0).data;
+  }
+  function avisoLegal() { // texto branco no alto da tela preta
+    const d = amostraTela(2, 18, 4, 60); if (!d) return true;
+    let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 120 && d[i + 1] > 120 && d[i + 2] > 120) n++;
+    return n > 25;
+  }
+  function temHud() { // números vermelhos da vida no canto de baixo
+    const d = amostraTela(34, 40, 0, 20); if (!d) return false;
+    let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 22 && d[i] > d[i + 1] * 2.5 && d[i] > d[i + 2] * 2.5) n++; // o Doom 64 é escuro
+    return n >= 4;
+  }
+  function preta() { // carregando a fase
+    const d = amostraTela(0, 40, 0, 64); if (!d) return true;
+    let t = 0; for (let i = 0; i < d.length; i += 4) t += d[i] + d[i + 1] + d[i + 2];
+    return t / (d.length / 4) / 3 < 2.5;
+  }
+  function comeca(aviso, pronto) {
+    clearInterval(S.auto);
+    let fase = 0, t0 = performance.now(), ultA = 0, nA = 0;
+    const g = em();
+    if (temHud()) { pronto(); return; }
+    aviso('Esperando a abertura do jogo...');
+    S.auto = setInterval(() => {
+      const f = g ? g.getFrameNum() : 0, agora = performance.now();
+      if (fase == 0) {
+        if (f > 200 && !avisoLegal()) { toque(BT.START); fase = 1; ultA = agora; aviso('Abrindo o menu...'); }
+      } else if (temHud() && nA >= 1) {
+        clearInterval(S.auto); pronto();
+      } else if (nA >= 2 && preta()) {
+        ultA = agora; aviso('Carregando a fase...'); // tela preta: espera, sem apertar nada
+      } else if (agora - ultA > 2600) {
+        if (nA >= 7) { clearInterval(S.auto); aviso('Não consegui entrar sozinho. Toque em 🎮 Eu jogo e aperte Start e depois A.'); return; }
+        toque(BT.A); nA++; ultA = agora; aviso(['Novo jogo...', 'Escolhendo a dificuldade...', 'Carregando a fase...'][Math.min(2, nA - 1)]);
+      }
+      if (agora - t0 > 150000) { clearInterval(S.auto); aviso('Demorou demais. Toque em 🎮 Eu jogo e entre pelo controle.'); }
+    }, 500);
+  }
+  const pausa = (on) => { try { const e = root.EJS_emulator; if (e && e.togglePlaying && !!e.paused !== on) e.togglePlaying(); } catch (x) {} };
 
   // o olho: claridade da coluna (no Doom perto é mais claro) e movimento/vermelho (demônios)
   const bri = new Float32Array(64), mov = new Float32Array(64), red = new Float32Array(64);
@@ -90,5 +132,5 @@
   async function guardaRom(f) { const d = await db(); return new Promise(ok => { const t = d.transaction('rom', 'readwrite'); t.objectStore('rom').put(f, 'doom64'); t.oncomplete = ok; t.onerror = ok; }); }
   async function romSalva() { try { const d = await db(); return await new Promise(ok => { const r = d.transaction('rom').objectStore('rom').get('doom64'); r.onsuccess = () => ok(r.result || null); r.onerror = () => ok(null); }); } catch (e) { return null; } }
 
-  root.MoscaDoom64 = { S, carrega, comeca, liga, guardaRom, romSalva };
+  root.MoscaDoom64 = { S, carrega, comeca, liga, guardaRom, romSalva, pausa, temHud };
 })(typeof self !== 'undefined' ? self : this);

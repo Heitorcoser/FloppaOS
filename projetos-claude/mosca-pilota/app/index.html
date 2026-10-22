@@ -50,10 +50,21 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .tabs button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--dim);border-radius:10px;padding:8px 4px;font:800 13px var(--display)}
 .tabs button.on{color:var(--fg);border-color:var(--amber);box-shadow:inset 0 -3px 0 var(--amber)}
 #emu{position:absolute;inset:0;background:#000}
-#game64{position:absolute;inset:0}
+#tela64{position:fixed;inset:0;background:#000;z-index:4;display:flex;flex-direction:column}
+#area64{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+#game64{position:absolute!important;inset:0}
+/* com a mosca jogando, a área tem o formato da tela do N64 (4:3): o que ela lê é só o jogo */
+#tela64.mosca #area64{flex:none;aspect-ratio:4/3;width:min(100%,calc((100vh - 150px) * 4 / 3));margin:0 auto}
+#tela64.mosca::after{content:"";flex:1;order:1}
+.bar64{flex:none;order:2;background:var(--panel);border-top:1px solid var(--line);padding:10px max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(12px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px}
+.bar64 .lin{display:flex;align-items:center;gap:10px}
+#st64{flex:1;font-weight:800;font-size:14px;color:#d7dccb}
+.bar64 .row{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+/* com a mosca no controle, some a barra e o controle virtual do emulador (cobriam o jogo) */
+#tela64.mosca .ejs_menu_bar,#tela64.mosca .ejs_virtualGamepad_parent,#tela64.mosca .ejs_virtualGamepad_open,#tela64.mosca .ejs_context_menu{display:none!important}
 #emuMsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center;color:#d7dccb;line-height:1.45;font-size:14px}
 #emuMsg b{color:var(--amber)}
-#olho64{position:absolute;left:8px;top:8px;width:150px;height:26px;pointer-events:none;z-index:3}
+#olho64{flex:none;width:150px;height:26px}
 </style>
 </head>
 <body>
@@ -70,7 +81,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     <div class="chip"><small id="recL">RECORDE</small><b id="rec">0%</b></div>
   </div>
   <div class="stage"><canvas id="world"></canvas>
-    <div id="emu" hidden><div id="game64"></div><div id="emuMsg"></div><canvas id="olho64" width="300" height="52"></canvas></div>
+    <div id="emu" hidden><div id="emuMsg"></div></div>
     <div id="toast"></div></div>
   <div class="brainbox"><canvas id="brain" aria-label="Atividade dos neurônios da mosca líder"></canvas></div>
   <div class="controls" id="ctlTreino">
@@ -78,12 +89,18 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     <button class="b" id="turbo" type="button">Turbo</button>
     <button class="b warn" id="reset" type="button">Do zero</button>
   </div>
-  <div class="controls" id="ctl64" hidden>
-    <button class="b" id="rom" type="button">📂 ROM</button>
-    <button class="b" id="joga" type="button">🪰 Mosca joga</button>
-    <button class="b" id="comeca" type="button">▶ Começar</button>
+  <div class="controls" id="ctl64" hidden style="grid-template-columns:2fr 1fr">
+    <button class="b on" id="jogar64" type="button">▶ Jogar Doom 64</button>
+    <button class="b" id="rom" type="button">📂 Trocar ROM</button>
   </div>
   <input type="file" id="romIn" accept=".n64,.z64,.v64,.zip" hidden>
+<div id="tela64" class="mosca" hidden>
+  <div id="area64"><div id="game64"></div></div>
+  <div class="bar64">
+    <div class="lin"><canvas id="olho64" width="300" height="52" aria-label="O que a mosca vê"></canvas><div id="st64">Carregando...</div></div>
+    <div class="row"><button class="b on" id="joga" type="button">🎮 Eu jogo</button><button class="b" id="sai64" type="button">✕ Sair</button></div>
+  </div>
+</div>
 </div>
 
 <div class="sheet" id="aboutSheet" hidden>
@@ -96,10 +113,12 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     <p>Cada geração tem 24 moscas. As que vão mais longe viram pais da próxima. Quando uma cruza a chegada, você sobe de nível: a pista nova é sorteada, mais longa, mais estreita, com mais curvas e obstáculos.</p>
     <p>No painel de baixo: âmbar é neurônio ativado, azul é inibido. Olho esquerdo à esquerda, olho direito à direita, neurônios descendentes embaixo.</p>
     <h2>👹 Modo Doom</h2>
+    <p>O app já vem com um cérebro pré-treinado no computador por bastante tempo, então ela já sabe caçar. Em "Do zero" dá para ver ela aprender desde o começo.</p>
     <p>O mesmo conectoma num labirinto com demônios. Metade dos neurônios visuais vê claridade (paredes: perto é mais claro) e a outra metade vê vermelho e movimento (demônios), como as moscas de verdade, que têm células para cor e para movimento. Os neurônios descendentes agora também puxam um gatilho.</p>
     <p>Nível 1: demônios parados. Nível 2: eles andam. Nível 3: perseguem e mordem. Nível 4 em diante: cospem fogo. O mapa é sorteado a cada geração. Sobe de nível quem mata todos em 2 gerações seguidas.</p>
     <h2>🎮 Modo Doom 64</h2>
-    <p>Você escolhe a sua ROM do Doom 64 (ela fica só no seu celular). O emulador roda o jogo e a mosca vê a tela em 15 faixas, igual aos raios: claridade vira parede e movimento ou vermelho vira demônio. Ela usa o cérebro treinado no modo Doom e aperta o direcional, o Z (tiro) e o B (abrir porta). Ela não aprende aqui, porque o jogo roda em tempo real e o treino precisa de milhares de partidas. Por isso joga mal: treine bastante no modo Doom antes.</p>
+    <p>Toque em <b>▶ Jogar Doom 64</b> e escolha a sua ROM (ela fica só no seu celular). O app liga o emulador em tela cheia, passa sozinho pela abertura e pelos menus e entrega o controle para a mosca. Ela vê a tela em 15 faixas, igual aos raios: claridade vira parede e movimento ou vermelho vira demônio. Usa o cérebro do modo Doom e aperta o direcional, o Z (tiro) e o B (abrir porta). Em <b>🎮 Eu jogo</b> o controle volta para você.</p>
+    <p>Ela não aprende no Doom 64, porque o jogo roda em tempo real e o treino precisa de milhares de partidas. Joga pior que no modo Doom.</p>
     <p>O emulador precisa de internet na primeira vez.</p>
     <button class="b on" id="closeAbout" type="button">Fechar</button>
   </div>
@@ -109,12 +128,14 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     <h2>Recomeçar do zero?</h2>
     <p>O treino deste modo é apagado. As moscas voltam a nascer com cérebros aleatórios no nível 1.</p>
     <div class="row"><button class="b" id="noReset" type="button">Cancelar</button><button class="b on" id="yesReset" type="button">Apagar e recomeçar</button></div>
+    <button class="b" id="resetTreinado" type="button" hidden>🧠 Voltar ao cérebro pré-treinado</button>
   </div>
 </div>
 
 <script src="brain.js"></script>
 <script src="core.js"></script>
 <script src="doom.js"></script>
+<script src="doom_treinado.js"></script>
 <script src="doomview.js"></script>
 <script src="doom64.js"></script>
 <script>
@@ -126,7 +147,7 @@ let ev=new M.Evolution(brain,{pop:24});
 let cerebroNovo=0;
 try{const s=localStorage.getItem(KEY);if(s&&!ev.load(s)){ev=new M.Evolution(brain,{pop:24});cerebroNovo=1}}catch(e){}
 $('nN').textContent=brain.N;$('nE').textContent=brain.E;$('nG').textContent=brain.nGenes;
-let rec=0;for(const h of ev.history)rec=Math.max(rec,h.level*100+h.best*100);
+let rec=0;for(const h of ev.history)rec=Math.max(rec,h.level*1000+h.best*100);
 
 /* ---------- telas ---------- */
 const wc=$('world'),wx=wc.getContext('2d'),bc=$('brain'),bx=bc.getContext('2d');
@@ -236,19 +257,29 @@ let toastT=0;
 function toast(t,up){const e=$('toast');e.textContent=t;e.className='show'+(up?' up':'');toastT=up?2.6:1.4}
 
 /* ---------- modo Doom ---------- */
-const KD='mosca.doom.v1',Dm=window.MoscaDoom,D64=window.MoscaDoom64;
+const KD='mosca.doom.v2',Dm=window.MoscaDoom,D64=window.MoscaDoom64;
 let dev=null,recD=0;
-function doomEv(){
+// Sem treino salvo, começa com o cérebro pré-treinado (horas de treino feitas antes, no computador),
+// do nível 1, para dar para ver ela caçando logo. "Do zero" volta aos cérebros aleatórios.
+function treinado(){
+  const T=window.DOOM_TREINADO;if(!T)return false;
+  const d=new Dm.DoomEvolution(brain,{pop:24});
+  if(!d.load(JSON.stringify(T)))return false;
+  d.genomes=d.genomes.slice(0,24);d.pop=24;d.level=1;d.gen=1;d.history=[];d.startGen();
+  return d;
+}
+function doomEv(zero){
   if(dev)return dev;
+  let s=null;try{s=localStorage.getItem(KD)}catch(e){}
   dev=new Dm.DoomEvolution(brain,{pop:24});
-  try{const s=localStorage.getItem(KD);if(s&&!dev.load(s))dev=new Dm.DoomEvolution(brain,{pop:24})}catch(e){}
-  for(const h of dev.history)recD=Math.max(recD,h.level*100+h.best*100);
+  if(!(s&&dev.load(s))&&!zero)dev=treinado()||dev;
+  for(const h of dev.history)recD=Math.max(recD,h.level*1000+h.best*100);
   return dev;
 }
 const txtNivel=n=>n<=1?'demônios parados':n==2?'agora os demônios andam':n==3?'agora eles perseguem e mordem':'agora eles cospem fogo';
 function onGenEndD(){
   const r=dev.lastResult;
-  recD=Math.max(recD,r.level*100+r.best*100);
+  recD=Math.max(recD,r.level*1000+r.best*100);
   if(r.levelUp)toast(`Limpou o mapa 2 vezes! Nível ${dev.level}: ${txtNivel(dev.level)}`,true);
   else if(r.quase)toast('Matou todos! Agora de novo, num mapa diferente',true);
   else toast(`Geração ${r.gen}: matou ${r.kills} de ${r.total}`);
@@ -261,30 +292,47 @@ function pickLeaderD(){
 }
 
 /* ---------- modo Doom 64 ---------- */
+// Um botão faz tudo: abre a ROM salva (ou pede uma), liga o emulador em tela cheia,
+// entra no jogo pelos menus e passa o controle para a mosca.
 const oc=$('olho64'),ox=oc.getContext('2d');
-function msg64(h){const e=$('emuMsg');e.hidden=!h;e.innerHTML=h||''}
+let rom64=null;
+function msg64(h){$('emuMsg').innerHTML=h}
+const st64=t=>$('st64').textContent=t;
 async function abre64(){
-  if(D64.S.carregou)return;
-  const f=await D64.romSalva();
-  msg64(`<div style="font-size:34px">🎮</div><div>Escolha a sua ROM do <b>Doom 64</b> (.n64 ou .z64) em <b>📂 ROM</b>. Ela fica só neste celular.</div>`+
-    (f?`<button class="b on" type="button" id="usaSalva">Usar a ROM salva: ${f.name.replace(/[<>&"]/g,'')}</button>`:'')+
-    `<div style="color:var(--dim);font-size:12px">A mosca joga com o cérebro treinado no modo 👹 Doom (nível ${doomEv().level}, geração ${dev.gen}).</div>`);
-  if(f)$('usaSalva').onclick=()=>liga64(f);
+  rom64=rom64||await D64.romSalva();
+  msg64(`<div style="font-size:40px">🎮🪰</div><div>A mosca joga o <b>Doom 64</b> de verdade com o cérebro treinado na aba 👹 Doom (nível ${doomEv().level}).</div>`+
+    (rom64?`<div style="color:var(--dim);font-size:13px">ROM: ${rom64.name.replace(/[<>&"]/g,'')}</div><div>Toque em <b>▶ Jogar Doom 64</b>.</div>`:`<div>Toque em <b>▶ Jogar Doom 64</b> e escolha a sua ROM (.n64 ou .z64). Ela fica guardada só neste celular.</div>`)+
+    `<div style="color:var(--dim);font-size:12px">Precisa de internet na primeira vez (o emulador baixa uns 10 MB).</div>`);
 }
-function liga64(f){
-  msg64(`<div>Carregando o emulador de N64...</div><div style="color:var(--dim);font-size:12px">Na primeira vez baixa uns 10 MB.</div>`);
-  D64.carrega('#game64',f,()=>{msg64('');toast('Doom 64 ligado! Toque em ▶ Começar, depois em 🪰 Mosca joga',true)},
-    ()=>msg64('<div>Não consegui baixar o emulador. Ele precisa de internet na primeira vez.</div>'));
+function moscaJoga(on){
+  if(on&&!D64.S.pronto)return;
+  D64.liga(brain,doomEv().genomes[0],on);
+  $('tela64').classList.toggle('mosca',on);
+  $('joga').textContent=on?'🎮 Eu jogo':'🪰 Mosca joga';
+  st64(on?'🪰 A mosca está jogando':'🎮 Você está jogando (controle na tela)');
 }
+function entra64(){
+  D64.comeca(st64,()=>{st64('No jogo!');moscaJoga(true)});
+}
+function jogar64(){
+  if(!rom64)return $('romIn').click();
+  $('tela64').hidden=false;paused=true;
+  if(D64.S.carregou){D64.pausa(false);if(D64.S.pronto&&!D64.S.joga)moscaJoga(true);return}
+  st64('Carregando o emulador...');
+  D64.carrega('#game64',rom64,()=>{st64('Jogo ligado');entra64()},
+    ()=>st64('Não consegui baixar o emulador. Ele precisa de internet na primeira vez.'));
+}
+$('jogar64').onclick=jogar64;
 $('rom').onclick=()=>$('romIn').click();
-$('romIn').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{await D64.guardaRom(f)}catch(x){}liga64(f)};
-$('comeca').onclick=()=>{if(!D64.S.pronto)return toast('Ligue o jogo primeiro em 📂 ROM');D64.comeca();toast('Entrando no jogo: Start, A, A, A')};
-$('joga').onclick=()=>{
-  if(!D64.S.pronto)return toast('Ligue o jogo primeiro em 📂 ROM');
-  const on=!D64.S.joga;D64.liga(brain,doomEv().genomes[0],on);
-  $('joga').classList.toggle('on',on);
-  toast(on?`A mosca assumiu o controle (cérebro do nível ${dev.level} do Doom)`:'Controle de volta para você');
+$('romIn').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  if(!/\.(n64|z64|v64|zip)$/i.test(f.name))toast('Esse arquivo não parece uma ROM de N64');
+  try{await D64.guardaRom(f)}catch(x){}
+  if(D64.S.carregou){try{localStorage.setItem('mosca.modo','d64')}catch(x){}return location.reload()} // o emulador só liga uma vez por sessão
+  rom64=f;abre64();jogar64();
 };
+$('joga').onclick=()=>{if(!D64.S.pronto)return st64('Espere o jogo ligar');moscaJoga(!D64.S.joga)};
+$('sai64').onclick=()=>{moscaJoga(false);D64.pausa(true);$('tela64').hidden=true;paused=false;$('pause').textContent='Pausar';$('pause').classList.remove('on')};
 
 /* ---------- troca de modo ---------- */
 let modo='pista';
@@ -296,9 +344,9 @@ function setModo(m){
   $('ctlTreino').hidden=m=='d64';$('ctl64').hidden=m!='d64';
   $('aliveL').textContent=m=='d64'?'MOSCA':'VIVAS';$('recL').textContent=m=='pista'?'RECORDE':'MELHOR';
   leader=null;
-  if(m=='doom'){doomEv();toast(`Doom nível ${dev.level}: ${txtNivel(dev.level)}`)}
+  if(m=='doom'){doomEv();toast(dev.gen==1&&window.DOOM_TREINADO?'Cérebro pré-treinado: ela já sabe caçar':`Doom nível ${dev.level}: ${txtNivel(dev.level)}`)}
   if(m=='d64')abre64();
-  if(m!='d64'&&D64.S.joga){D64.liga(brain,null,false);$('joga').classList.remove('on')}
+  if(m!='d64'&&D64.S.joga)moscaJoga(false);
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setModo(b.dataset.m));
 
@@ -306,7 +354,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setModo(b.dat
 let paused=false,turbo=false,acc=0,last=performance.now();
 function onGenEnd(){
   const r=ev.lastResult;
-  rec=Math.max(rec,r.level*100+r.best*100);
+  rec=Math.max(rec,r.level*1000+r.best*100);
   if(r.levelUp)toast(`Chegou! Nível ${ev.level}: pista nova e mais difícil`,true);
   else if(r.quase)toast('Chegou! Agora de novo, com os obstáculos em outro lugar',true);
   else toast(`Geração ${r.gen}: melhor foi ${Math.round(r.best*100)}% da pista`);
@@ -322,26 +370,27 @@ function frame(now){
     else{acc+=dt;let n=0;while(acc>=1/30&&n<4){acc-=1/30;n++;if(E.step())fim()}}
   }
   if(modo=='pista'){pickLeader();drawWorld()}
-  else if(modo=='doom'){pickLeaderD();MoscaDoomView.draw(wx,WR.width,WR.height,dev.map,leader,dev.flies,{limite:dev.limit,tempo:dev.time})}
-  else{const S=D64.S;leader=S.ctrl?{ctrl:S.ctrl,steer:S.steer,thrust:S.thrust,fire:S.fire}:null;ox.clearRect(0,0,300,52);if(S.joga){ox.save();ox.scale(2,2);MoscaDoomView.olhos(ox,S.par,S.dem,0,0,150,26);ox.restore()}}
+  else if(modo=='doom'){pickLeaderD();MoscaDoomView.draw(wx,WR.width,WR.height,leader.M,leader,dev.flies.filter(f=>f.M===leader.M),{limite:dev.limit,tempo:dev.time})}
+  else{const S=D64.S;leader=S.ctrl?{ctrl:S.ctrl,steer:S.steer,thrust:S.thrust,fire:S.fire}:null;if(!$('tela64').hidden){ox.clearRect(0,0,300,52);ox.save();ox.scale(2,2);MoscaDoomView.olhos(ox,S.par,S.dem,0,0,150,26);ox.restore()}}
   drawBrain();
   if(modo=='pista'){
     $('lvl').textContent=ev.level;$('gen').textContent=ev.gen;$('alive').textContent=ev.flies.filter(f=>f.alive).length+'/'+ev.flies.length;
-    $('rec').textContent='N'+Math.floor(rec/100)+' '+Math.round(rec%100)+'%';
+    $('rec').textContent='N'+Math.floor(rec/1000)+' '+Math.round(rec%1000)+'%';
   }else{
     const d=doomEv();$('lvl').textContent=d.level;$('gen').textContent=d.gen;
     $('alive').textContent=modo=='doom'?d.flies.filter(f=>f.vivo).length+'/'+d.flies.length:D64.S.joga?'joga':'parada';
-    $('rec').textContent='N'+Math.floor(recD/100)+' '+Math.round(recD%100)+'%';
+    $('rec').textContent='N'+Math.floor(recD/1000)+' '+Math.round(recD%1000)+'%';
   }
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').className=''}
   requestAnimationFrame(frame);
 }
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Continuar':'Pausar';$('pause').classList.toggle('on',paused)};
 $('turbo').onclick=()=>{turbo=!turbo;$('turbo').classList.toggle('on',turbo)};
-$('reset').onclick=()=>{$('resetSheet').hidden=false};
+$('reset').onclick=()=>{$('resetTreinado').hidden=modo!='doom'||!window.DOOM_TREINADO;$('resetSheet').hidden=false};
+$('resetTreinado').onclick=()=>{try{localStorage.removeItem(KD)}catch(e){}dev=null;recD=0;doomEv();leader=null;$('resetSheet').hidden=true;toast('Cérebro pré-treinado de volta',true)};
 $('noReset').onclick=()=>{$('resetSheet').hidden=true};
 $('yesReset').onclick=()=>{
-  if(modo=='doom'){try{localStorage.removeItem(KD)}catch(e){}dev=null;recD=0;doomEv()}
+  if(modo=='doom'){try{localStorage.removeItem(KD)}catch(e){}dev=null;recD=0;doomEv(true)}
   else{try{localStorage.removeItem(KEY)}catch(e){}ev=new M.Evolution(brain,{pop:24});rec=0;renderTrack()}
   leader=null;$('resetSheet').hidden=true;toast('Moscas novas, cérebros aleatórios')};
 $('about').onclick=()=>{$('aboutSheet').hidden=false};

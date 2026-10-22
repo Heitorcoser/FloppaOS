@@ -175,6 +175,7 @@
   function DoomEvolution(brain, opts) {
     this.brain = prepara(brain);
     this.pop = (opts && opts.pop) || 24;
+    this.nMapas = (opts && opts.mapas) || 1; // cada cérebro joga em vários mapas: aprende a caçar, não a decorar
     this.r = rng((opts && opts.seed) || (Date.now() & 0xffffff));
     this.gen = 1; this.level = 1; this.history = []; this.seguidas = 0;
     this.genomes = [];
@@ -185,16 +186,17 @@
   D.randomGenome = function () { const g = new Float32Array(this.brain.doomGenes); for (let i = 0; i < g.length; i++) g[i] = this.r.n() * 0.8; return g; };
   D.startGen = function () {
     // mapa novo a cada geração: precisa aprender a caçar, não decorar o caminho
-    this.map = makeMap(this.level, Math.floor(this.r() * 1e9));
-    this.flies = this.genomes.map(g => Object.assign(novoJogo(this.map), { ctrl: controle(this.brain, g), genes: g }));
+    this.maps = []; for (let k = 0; k < this.nMapas; k++) this.maps.push(makeMap(this.level, Math.floor(this.r() * 1e9)));
+    this.map = this.maps[0]; this.flies = [];
+    this.maps.forEach(M => this.genomes.forEach((g, gi) => this.flies.push(Object.assign(novoJogo(M), { M, gi, ctrl: controle(this.brain, g), genes: g }))));
     this.time = 0; this.limit = 25 + 5 * this.map.spawns.length;
   };
   D.step = function () {
     let vivos = 0;
     for (const j of this.flies) {
       if (!j.vivo) continue;
-      enxerga(this.map, j);
-      passo(this.map, j, pensa(this.brain, j.ctrl, j.par, j.dem, j.v / VMAX));
+      enxerga(j.M, j);
+      passo(j.M, j, pensa(this.brain, j.ctrl, j.par, j.dem, j.v / VMAX));
       if (j.vivo) vivos++;
     }
     this.time += DT;
@@ -206,8 +208,11 @@
       (j.limpou ? 800 + Math.max(0, this.limit - j.t) * 15 : 0);
   };
   D.endGen = function () {
-    const sc = this.flies.map(j => ({ g: j.genes, s: this.fitness(j), m: j.mortes, n: j.inim.length, ok: j.limpou })).sort((a, b) => b.s - a.s);
-    const limpou = this.flies.filter(j => j.limpou).length;
+    // soma o resultado de cada cérebro em todos os mapas
+    const sc = this.genomes.map(g => ({ g, s: 0, m: 0, n: 0, ok: true }));
+    for (const j of this.flies) { const o = sc[j.gi]; o.s += this.fitness(j); o.m += j.mortes; o.n += j.inim.length; o.ok = o.ok && j.limpou; }
+    sc.sort((a, b) => b.s - a.s);
+    const limpou = sc.filter(o => o.ok).length;
     this.history.push({ gen: this.gen, level: this.level, best: sc[0].m / sc[0].n, done: limpou });
     if (this.history.length > 200) this.history.shift();
     const next = [sc[0].g, sc[1].g, sc[2].g].map(g => Float32Array.from(g));
