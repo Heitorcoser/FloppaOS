@@ -217,6 +217,21 @@ canvas.px { width: 128px; height: 128px; image-rendering: pixelated; background:
 .aift > .it { flex-direction: row; justify-content: center; padding: 8px }
 .aiin { display: flex; gap: 6px }
 .aiin textarea { flex: 1 }
+.aihd span { display: flex; gap: 6px }
+#set > select { margin-top: 8px; width: 100%; font-size: 16px; padding: 8px; background: var(--in); color: var(--tx); border: 1px solid var(--bd); border-radius: 8px }
+#chips { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 0 12px 6px; scrollbar-width: none }
+#chips:empty { display: none }
+#chips button { flex: none; border: 1px solid var(--bd); background: var(--in); color: var(--tx); border-radius: 999px; padding: 6px 12px; font-size: 13px; white-space: nowrap }
+.msg { margin: 6px 0; padding: 8px; border-radius: 10px; background: var(--in); overflow-wrap: anywhere }
+.msg.u { background: var(--ac); color: #fff; white-space: pre-wrap; margin-left: 32px }
+.msg pre { background: #000; color: #4ade80; padding: 8px; border-radius: 8px; overflow: auto; font-size: 12px; margin: 6px 0 2px }
+.msg .nota { font-size: 12px; margin-top: 6px; color: var(--mu, #9aa) }
+.msg .nota.ok { color: #4ade80 }
+.msg .nota.av { color: #f59e0b }
+.plano { margin: 6px 0; display: grid; gap: 4px; font-size: 13px }
+.plano div { background: var(--card); border-radius: 8px; padding: 6px 8px }
+.digit::after { content: "▍"; animation: pisca 1s steps(2) infinite }
+@keyframes pisca { 50% { opacity: 0 } }
 .b.env { width: 56px; height: auto; background: var(--ac); color: #fff; border: 0 }
 
 /* ---------- avisos, jogo em tela cheia, emulador ---------- */
@@ -291,9 +306,9 @@ details.guia div { margin-top: 8px; line-height: 1.5 }
   <button onclick="halt(1)"><b>⏹</b><span>Parar</span></button>
 </nav>
 <section id="ai">
-  <div class="aihd"><b>🤖 Assistente</b><button class="x" onclick="aiToggle()" aria-label="Fechar assistente">✕</button></div>
-  <details id="set"><summary>⚙ Chave Groq e modelo</summary><input id="ak" type="password" placeholder="gsk_... (fica só neste aparelho)" autocomplete="off"><input id="am" value="qwen/qwen3.6-27b"><input id="at" type="number" value="800"><div class="mu">tamanho máximo da resposta (tokens). Conta grátis: até ~800</div><label class="ck"><input type="checkbox" id="auto" checked>Continuar sozinha quando a resposta for cortada</label><label class="ck"><input type="checkbox" id="fix" checked>Validar e corrigir o código sozinha</label><label class="ck"><input type="checkbox" id="apl">Montar sozinha quando estiver sem erros</label><label class="ck"><input type="checkbox" id="think">Pensar mais (mais esperta, gasta mais tokens)</label><button class="it" onclick="listModels()">🔍 Buscar modelos da minha conta</button></details>
-  <div id="msgs"><div class="mu">Oi! Sou a assistente (Qwen). Peça: "faça um jogo de pegar moedas", "monte uma linha que faz circuitos" ou "monte um alarme com lâmpada e som". Eu escrevo o código do Comand ou monto o sistema inteiro para você.</div></div>
+  <div class="aihd"><b>🤖 Assistente</b><span><button class="x" onclick="novaConversa()" aria-label="Nova conversa" title="Nova conversa">🗑</button><button class="x" onclick="aiToggle()" aria-label="Fechar assistente">✕</button></span></div>
+  <details id="set"><summary>⚙ IA, chave e modelo</summary><select id="ap" onchange="provTroca()"></select><input id="au" placeholder="Endereço (ex: http://localhost:20128/v1)"><input id="ak" type="password" placeholder="Chave (fica só neste aparelho)" autocomplete="off"><input id="am" placeholder="Modelo"><div class="mu" id="apd"></div><input id="at" type="number" value="1200"><div class="mu">tamanho máximo da resposta (tokens). Se a resposta cortar, ela continua sozinha</div><label class="ck"><input type="checkbox" id="auto" checked>Continuar sozinha quando a resposta for cortada</label><label class="ck"><input type="checkbox" id="fix" checked>Testar e corrigir o código sozinha</label><label class="ck"><input type="checkbox" id="apl">Montar sozinha quando estiver sem erros</label><label class="ck"><input type="checkbox" id="think">Pensar mais (mais esperta, gasta mais tokens)</label><button class="it" onclick="listModels()">🔍 Buscar modelos da minha conta</button></details>
+  <div id="msgs"></div><div id="chips"></div>
   <div class="aift">
     <button class="it" onclick="consoleUI()">🧰 Usar outra IA / comandos (colar resposta)</button>
     <select id="al"><option value="jsx">⚡ Código em: JavaScript (recomendado, a IA acerta mais)</option><option value="comand">📟 Código em: Comand (fácil, a IA erra mais)</option><option value="javascript">Código em: JavaScript (roda no Comand)</option><option value="lua">Código em: Lua (Roblox)</option><option value="python">Código em: Python</option><option value="csharp">Código em: C#</option><option value="java">Código em: Java</option><option value="cpp">Código em: C++</option><option value="html">Código em: HTML/CSS/JS</option></select>
@@ -2894,7 +2909,7 @@ function xc(p) {
   for (let k = 1; k < p.length; k += 3) {
     const l = p[k].toLowerCase();
     if (l == "comand" || l == "javascript" || l == "js" || l == "jsx" || l == "python" || l == "py")
-      return [p[k + 2], l == "comand" ? "" : l == "jsx" ? "jsx" : l == "python" || l == "py" ? "py" : "js"];
+      return [p[k + 1], l == "comand" ? "" : l == "jsx" ? "jsx" : l == "python" || l == "py" ? "py" : "js"];
   }
   return [];
 }
@@ -2985,15 +3000,24 @@ function fmt(t) {
 }
 function addMsg(r, t) {
   const m = document.createElement("div");
-  m.style.cssText =
-    "margin:6px 0;padding:8px;border-radius:10px;background:" +
-    (r == "u" ? "var(--ac);color:#fff;white-space:pre-wrap" : "var(--in)");
+  m.className = "msg" + (r == "u" ? " u" : "");
   if (r == "u") m.textContent = t;
   else m.innerHTML = fmt(t);
   $("#msgs").append(m);
   $("#msgs").scrollTop = 1e6;
   return m;
 }
+const semThink = (t) =>
+  t
+    .replace(/<think>[\s\S]*?<\/think>/g, "")
+    .replace(/<think>[\s\S]*$/, "")
+    .trim();
+// Mostra a resposta enquanto ela chega (blocos de código ainda abertos viram <pre>)
+const fmtVivo = (t) =>
+  semThink(t)
+    .split("```")
+    .map((x, i) => (i % 2 ? "<pre>" + esc(x.replace(/^\w*\n/, "")) + "</pre>" : md(x)))
+    .join("");
 const AL = {
   variavel: "vari",
   monitor: "vari",
@@ -3048,6 +3072,14 @@ function pj(t) {
 }
 function build(j, xc, xl) {
   if (typeof j == "string") j = pj(j);
+  if (j.planejar) return montaPlano(achaItem(String(j.planejar)) || String(j.planejar));
+  // aparelhos com preço são pagos, como no catálogo
+  const custo = (j.aparelhos || j.devices || j.dispositivos || []).reduce((s, a) => {
+    const k = nk(a.tipo || a.type),
+      t = T[Object.hasOwn(T, k) ? k : AL[k]];
+    return s + ((t && t.price) || 0);
+  }, 0);
+  if (custo && !pay(custo)) return;
   snap();
   (j.remover || []).forEach((i) => D[i] && del(+i));
   (j.editar || []).forEach((e) => {
@@ -3185,23 +3217,24 @@ function cb(n, a) {
     toast("Erro: " + e.message);
   }
 }
-async function ask() {
-  const k = $("#ak").value.trim(),
-    t = $("#ain").value.trim();
+async function ask(txt, direto) {
+  const t = String(txt ?? $("#ain").value).trim();
   if (!t) return;
   track("ia");
-  if (!k) {
-    toast("Cole sua chave da Groq em ⚙");
-    $("#set").open = true;
-    return;
-  }
-  try {
-    localStorage.setItem("fabk", k);
-    localStorage.setItem("fabm2", $("#am").value);
-  } catch (e) {}
+  provGuarda();
   if (LAST && /^(continue|continua|continuar|segue|prossiga)\W*$/i.test(t)) {
     $("#ain").value = "";
     autoCont();
+    return;
+  }
+  // pedidos de linha de produção são resolvidos aqui mesmo, sem gastar IA
+  if (!direto && pedidoLocal(t)) {
+    $("#ain").value = "";
+    return;
+  }
+  if (!$("#ak").value.trim() && !PROV[PC.p].semChave) {
+    toast("Cole sua chave em ⚙");
+    $("#set").open = true;
     return;
   }
   LAST = null;
@@ -3210,32 +3243,58 @@ async function ask() {
   HIST.push({ role: "user", content: t });
   const w = addMsg("a", "…");
   WS = w;
+  let tv = 0;
+  const vivo = (a, pensa) => {
+    const n = performance.now();
+    if (n - tv < 90) return;
+    tv = n;
+    w.classList.add("digit");
+    w.innerHTML = a.trim()
+      ? fmtVivo(a)
+      : `<span class=mu>💭 pensando${pensa ? " (" + pensa.length + " letras)" : ""}...</span>`;
+    $("#msgs").scrollTop = 1e6;
+  };
   try {
-    const sys = mkSys();
-    const j = await groq({
-      model: $("#am").value.trim(),
-      messages: [{ role: "system", content: sys }, ...HIST.slice(-10)],
-      temperature: 0.2,
-    });
-    const a = j.choices[0].message.content;
+    const j = await groq(
+      {
+        model: $("#am").value.trim(),
+        messages: [{ role: "system", content: mkSys() }, ...HIST.slice(-10)],
+        temperature: 0.2,
+      },
+      vivo,
+    );
+    w.classList.remove("digit");
+    const a = j.choices[0].message.content || "";
+    if (!semThink(a))
+      throw new Error(
+        j.choices[0].finish_reason == "length"
+          ? "a IA gastou todo o limite pensando e não respondeu. Aumente o tamanho em ⚙ ou desligue Pensar mais."
+          : "a IA respondeu vazio. Tente outro modelo em ⚙.",
+      );
     HIST.push({ role: "assistant", content: a });
     showAns(w, a, j);
     if (LAST && $("#auto").checked) await autoCont();
     if (!LAST) await post(w);
+    guardaChat();
   } catch (e) {
+    w.classList.remove("digit");
     HIST.pop();
     w.textContent =
       e instanceof TypeError
-        ? "Não consegui falar com a Groq. Se esta página está aberta pelo link do Claude, o navegador bloqueia chamadas para sites externos. Abra o arquivo HTML direto no navegador do aparelho."
+        ? PC.p == "omni"
+          ? "Não achei o OmniRoute. Abra o Termux, rode omniroute e deixe aberto. Este HTML precisa estar aberto direto no navegador do celular."
+          : "Não consegui falar com " +
+            provNome() +
+            ". Veja a internet. Se esta página está aberta pelo link do Claude, o navegador bloqueia chamadas externas: abra o arquivo HTML direto no navegador."
         : "Erro: " + e.message;
-    if (/does not exist/.test(e.message)) setTimeout(listModels, 300);
+    if (/does not exist|not found|model/i.test(e.message)) setTimeout(listModels, 300);
   }
 }
 let LAST = null,
   WS = null;
 async function waitUI(s) {
   for (let i = Math.ceil(s) + 1; i > 0; i--) {
-    if (WS) WS.textContent = "⏳ Limite da Groq: continuando em " + i + "s...";
+    if (WS) WS.textContent = "⏳ Limite da " + provNome() + ": continuando em " + i + "s...";
     await sl(1000);
   }
 }
@@ -3305,68 +3364,122 @@ async function autoCont() {
     if (!(await contAns())) break;
   }
 }
-async function groq(body) {
-  const k = $("#ak").value.trim();
-  let mt = Math.max(200, +$("#at").value || 800),
+// Fala com qualquer serviço no formato OpenAI. Com "vivo", recebe a resposta aos pedaços (streaming).
+async function groq(body, vivo) {
+  provGuarda();
+  const k = $("#ak").value.trim(),
+    url = provURL() + "/chat/completions";
+  let mt = Math.max(200, +$("#at").value || 1200),
     ef = 1,
-    rl = 0;
+    rl = 0,
+    st = !!vivo;
   for (let i = 0; i < 14; i++) {
-    const b = { ...body, max_tokens: mt };
-    if (ef && !$("#think").checked) b.reasoning_effort = "none";
-    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + k },
-      body: JSON.stringify(b),
-    });
-    const j = await r.json();
+    const b = { ...body, max_tokens: mt },
+      h = { "Content-Type": "application/json" };
+    if (st) b.stream = true;
+    if (PC.p == "groq" && ef && !$("#think").checked) b.reasoning_effort = "none";
+    if (k) h.Authorization = "Bearer " + k;
+    const r = await fetch(url, { method: "POST", headers: h, body: JSON.stringify(b) });
+    if (r.ok && st && /event-stream/.test(r.headers.get("content-type") || "")) return lerStream(r, vivo);
+    let j = {};
+    try {
+      j = await r.json();
+    } catch (e) {
+      if (r.ok) throw new Error("resposta estranha do servidor");
+    }
+    if (Array.isArray(j)) j = j[0] || {};
     if (r.ok) return j;
-    const m = (j.error && j.error.message) || String(r.status),
+    const m = String((j.error && (j.error.message || j.error)) || "erro " + r.status),
       lim = m.match(/Limit (\d+)/);
     if (/reasoning/i.test(m) && ef) {
       ef = 0;
+      continue;
+    }
+    if (/stream/i.test(m) && st) {
+      st = false;
       continue;
     }
     if (/too large|max_tokens/i.test(m) && lim && mt > 200) {
       mt = Math.max(200, Math.min(mt - 100, +lim[1] - 150));
       continue;
     }
-    if (/rate limit/i.test(m)) {
+    if (/rate limit|quota|429/i.test(m) || r.status == 429) {
       const t = m.match(/try again in (?:(\d+)m)?([\d.]+)s/i),
         w = t ? +(t[1] || 0) * 60 + +t[2] : 15;
       if (w <= 75 && rl++ < 4) {
         await waitUI(w);
         continue;
       }
-      throw new Error("Limite da Groq atingido. Tente de novo em " + Math.ceil(w) + "s.");
+      throw new Error("Limite da " + provNome() + " atingido. Tente de novo em " + Math.ceil(w) + "s.");
     }
+    if (r.status == 401 || /api key|unauthorized|invalid.*key/i.test(m))
+      throw new Error("chave recusada pela " + provNome() + ". Confira a chave em ⚙.");
     throw new Error(m);
   }
   throw new Error("Não deu certo depois de várias tentativas");
 }
+async function lerStream(r, vivo) {
+  const rd = r.body.getReader(),
+    dec = new TextDecoder();
+  let buf = "",
+    txt = "",
+    pensa = "",
+    fin = null;
+  for (;;) {
+    const { value, done } = await rd.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const l = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (!l.startsWith("data:")) continue;
+      const dd = l.slice(5).trim();
+      if (dd == "[DONE]") continue;
+      let j;
+      try {
+        j = JSON.parse(dd);
+      } catch (e) {
+        continue;
+      }
+      if (j.error) throw new Error(j.error.message || String(j.error));
+      const c = j.choices && j.choices[0];
+      if (!c) continue;
+      const dt = c.delta || {};
+      if (dt.content) txt += dt.content;
+      if (dt.reasoning || dt.reasoning_content) pensa += dt.reasoning || dt.reasoning_content;
+      if (c.finish_reason) fin = c.finish_reason;
+      vivo(txt, pensa);
+    }
+  }
+  return { choices: [{ message: { content: txt }, finish_reason: fin || "stop" }] };
+}
 async function listModels() {
+  provGuarda();
   const k = $("#ak").value.trim();
-  if (!k) {
+  if (!k && !PROV[PC.p].semChave) {
     toast("Cole a chave primeiro");
     return;
   }
   const w = addMsg("a", "Buscando modelos…");
   try {
-    const r = await fetch("https://api.groq.com/openai/v1/models", {
-      headers: { Authorization: "Bearer " + k },
+    const r = await fetch(provURL() + "/models", {
+      headers: k ? { Authorization: "Bearer " + k } : {},
     });
     const j = await r.json();
     if (!r.ok) throw new Error((j.error && j.error.message) || r.status);
     const ids = j.data
         .map((m) => m.id)
-        .filter((i) => !/whisper|guard|tts|orpheus/.test(i))
+        .map((i) => i.replace(/^models\//, ""))
+        .filter((i) => !/whisper|guard|tts|orpheus|embed|image|vision-only|audio/.test(i))
         .sort(),
-      qw = ids.filter((i) => /qwen/i.test(i)),
+      qw = PC.p == "groq" ? ids.filter((i) => /qwen/i.test(i)) : [],
       L = qw.length ? qw : ids;
     w.innerHTML =
       "<div>" +
       (qw.length
         ? "Modelos Qwen da sua conta. Toque para usar:"
-        : "Sua conta não tem Qwen. Modelos disponíveis, toque para usar:") +
+        : "Modelos disponíveis, toque para usar:") +
       "</div>" +
       L.map(
         (i) =>
@@ -3382,15 +3495,115 @@ async function listModels() {
 }
 function useM(i) {
   $("#am").value = i;
-  try {
-    localStorage.setItem("fabm2", i);
-  } catch (e) {}
+  provGuarda();
   toast("Modelo: " + i);
 }
+
+/* ---- provedores de IA (todos no formato OpenAI) ---- */
+const PROV = {
+  groq: {
+    n: "Groq (grátis)",
+    url: "https://api.groq.com/openai/v1",
+    m: "qwen/qwen3.6-27b",
+    d: "Chave grátis em console.groq.com › API Keys (começa com gsk_).",
+  },
+  omni: {
+    n: "OmniRoute (no celular)",
+    url: "http://localhost:20128/v1",
+    m: "",
+    semChave: 1,
+    d: "Rode omniroute no Termux e deixe aberto. Chave e modelo ficam no painel (localhost:20128). Abra este HTML direto no navegador.",
+  },
+  openrouter: {
+    n: "OpenRouter",
+    url: "https://openrouter.ai/api/v1",
+    m: "qwen/qwen3-coder:free",
+    d: "Chave em openrouter.ai/keys. Modelos que terminam em :free são grátis.",
+  },
+  gemini: {
+    n: "Google Gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai",
+    m: "gemini-2.5-flash",
+    d: "Chave grátis em aistudio.google.com/apikey.",
+  },
+  outro: {
+    n: "Outro (formato OpenAI)",
+    url: "",
+    m: "",
+    semChave: 1,
+    d: "Qualquer serviço no formato OpenAI: coloque o endereço que termina em /v1.",
+  },
+};
+let PC = { p: "groq", k: {}, m: {}, u: {} };
 try {
-  $("#ak").value = localStorage.getItem("fabk") || "";
-  $("#am").value = localStorage.getItem("fabm2") || "qwen/qwen3.6-27b";
+  Object.assign(PC, JSON.parse(localStorage.getItem("fabprov") || "{}"));
+  // chave e modelo da versão antiga (só Groq)
+  if (!PC.k.groq && localStorage.getItem("fabk")) PC.k.groq = localStorage.getItem("fabk");
+  if (!PC.m.groq && localStorage.getItem("fabm2")) PC.m.groq = localStorage.getItem("fabm2");
 } catch (e) {}
+if (!PROV[PC.p]) PC.p = "groq";
+const provURL = () =>
+  ($("#au").value.trim() || PROV[PC.p].url).replace(/\/+$/, "").replace(/\/chat\/completions$/, "");
+const provNome = () => PROV[PC.p].n.replace(/ \(.*/, "");
+function provUI() {
+  const P = PROV[PC.p];
+  $("#ap").innerHTML = Object.entries(PROV)
+    .map(([k, v]) => `<option value=${k}${k == PC.p ? " selected" : ""}>${v.n}</option>`)
+    .join("");
+  $("#ak").value = PC.k[PC.p] || "";
+  $("#am").value = PC.m[PC.p] || P.m;
+  $("#au").value = PC.u[PC.p] || P.url;
+  $("#au").style.display = PC.p == "omni" || PC.p == "outro" ? "" : "none";
+  $("#apd").textContent = P.d;
+}
+function provGuarda() {
+  PC.k[PC.p] = $("#ak").value.trim();
+  PC.m[PC.p] = $("#am").value.trim();
+  PC.u[PC.p] = $("#au").value.trim();
+  try {
+    localStorage.setItem("fabprov", JSON.stringify(PC));
+  } catch (e) {}
+}
+function provTroca() {
+  provGuarda();
+  PC.p = $("#ap").value;
+  provUI();
+}
+provUI();
+
+/* ---- conversa: memória, sugestões ---- */
+function guardaChat() {
+  try {
+    localStorage.setItem("fabchat", JSON.stringify(HIST.slice(-16)));
+  } catch (e) {}
+}
+function boasVindas() {
+  const m = document.createElement("div");
+  m.className = "mu";
+  m.textContent =
+    "Oi! Sou a assistente. Monto linhas de produção completas (sem gastar IA), escrevo jogos, explico e conserto seu projeto. Toque numa sugestão ou peça do seu jeito.";
+  $("#msgs").append(m);
+}
+function novaConversa() {
+  HIST = [];
+  LAST = null;
+  guardaChat();
+  $("#msgs").innerHTML = "";
+  boasVindas();
+}
+const CHIPS = [
+  ["🏭 Linha de celular", "Monte uma linha de produção de celular"],
+  ["🎮 Jogo da cobrinha", "Faça um jogo da cobrinha"],
+  ["🔍 Explicar meu projeto", "Explique o que meu projeto atual faz, aparelho por aparelho, e diga o que melhorar."],
+  ["🩺 Achar erros", "Ache e conserte os erros dos Comands do meu projeto (use editar)."],
+  ["💰 O que construir?", "Olhando meu projeto, nível e dinheiro, o que devo construir agora para ganhar mais?"],
+];
+$("#chips").innerHTML = CHIPS.map(([l], i) => `<button onclick="ask(CHIPS[${i}][1])">${l}</button>`).join("");
+try {
+  HIST = JSON.parse(localStorage.getItem("fabchat") || "[]");
+} catch (e) {}
+if (!HIST.length) boasVindas();
+HIST.forEach((h) => addMsg(h.role == "user" ? "u" : "a", h.content));
 
 /* ---- IA esperta: validação, conserto, desfazer ---- */
 const CMDW = [
@@ -3487,6 +3700,8 @@ function chk(raw) {
       try {
         const j = pj(c),
           ids = new Set();
+        if (j.planejar && !achaItem(String(j.planejar)))
+          E.push("planejar: item desconhecido. Use um destes: " + Object.keys(ITENS).join(", "));
         (j.aparelhos || j.devices || []).forEach((a, i) => {
           const k = nk(a.tipo || a.type);
           if (!Object.hasOwn(T, k) && !Object.hasOwn(AL, k))
@@ -3529,18 +3744,27 @@ function mkSys() {
     SYS.replace(/~~~/g, "```") +
     EXTRA +
     promptFabricas() +
+    contextoExtra() +
     "\nPROJETO ATUAL: " +
     JSON.stringify({ aparelhos: P, fios: W, variaveis: VARS, comandos: Object.keys(CMDS) }).slice(0, 3500) +
     langNote()
   );
 }
+// Valida a sintaxe e roda o código de verdade; se achar erro, pede para a IA corrigir (até 2 vezes)
+async function verifica(raw, w) {
+  const E = chk(raw);
+  if (E.length) return { E, ok: [] };
+  if (w && codigosJs(raw).length) w.insertAdjacentHTML("beforeend", "<div class=nota>🧪 Testando o código...</div>");
+  const r = await testaResposta(raw);
+  if (w && w.lastChild && w.lastChild.className == "nota") w.lastChild.remove();
+  return r;
+}
 async function post(w) {
-  let raw = HIST[HIST.length - 1].content;
-  for (let i = 0; i < 2 && $("#fix").checked; i++) {
-    const E = chk(raw);
-    if (!E.length) break;
+  let raw = HIST[HIST.length - 1].content,
+    V = await verifica(raw, w);
+  for (let i = 0; i < 2 && V.E.length && $("#fix").checked; i++) {
     WS = w;
-    w.textContent = "🔧 Achei " + E.length + " erro(s). Corrigindo sozinha...";
+    w.textContent = "🔧 Achei " + V.E.length + " problema(s). Corrigindo sozinha...";
     try {
       const j = await groq({
         model: $("#am").value.trim(),
@@ -3550,8 +3774,8 @@ async function post(w) {
           {
             role: "user",
             content:
-              "O app validou seu código e achou erros:\n- " +
-              E.join("\n- ") +
+              "O app testou sua resposta e achou problemas:\n- " +
+              V.E.join("\n- ") +
               "\nResponda de novo COMPLETO e corrigido, mesmos blocos, sem pedir desculpas.",
           },
         ],
@@ -3568,21 +3792,25 @@ async function post(w) {
       w.textContent = "Erro: " + e.message;
       return;
     }
+    V = await verifica(raw, w);
   }
-  const E = chk(raw);
-  if (E.length) {
-    const n = document.createElement("div");
-    n.style.cssText = "color:#f59e0b;font-size:12px;margin-top:4px";
-    n.textContent = "⚠ Ainda pode ter erro: " + E.slice(0, 3).join(" · ");
-    w.append(n);
-  } else if ($("#apl").checked) autoApply(raw);
+  const n = document.createElement("div");
+  if (V.E.length) {
+    n.className = "nota av";
+    n.textContent = "⚠ Ainda pode ter erro: " + V.E.slice(0, 3).join(" · ");
+  } else if (V.ok.length) {
+    n.className = "nota ok";
+    n.textContent = "🧪 Testei: rodou 60 tiques com os botões, sem erro, e desenhou na tela.";
+  }
+  if (n.className) w.append(n);
+  if (!V.E.length && $("#apl").checked) autoApply(raw);
 }
 function autoApply(raw) {
   const p = raw.split(/```(\w*)\n?([\s\S]*?)```/),
     x = xc(p)[0] ? xc(p) : nearCode(CB.length - 1);
   try {
     for (let k = 1; k < p.length; k += 3)
-      if (p[k].toLowerCase() == "fabrica") return build(p[k + 2], x[0], x[1]);
+      if (p[k].toLowerCase() == "fabrica") return build(p[k + 1], x[0], x[1]);
     if (x[0]) {
       snap();
       add("comand", -V.x / V.s + 10, -V.y / V.s + 10, { code: x[0], lang: x[1] });
@@ -3607,6 +3835,244 @@ function fixCmd(d) {
     d.id +
     ".";
   ask();
+}
+
+/* ---- IA mais esperta: planejador de fábricas, teste do código e contexto ---- */
+
+/* -- Planejador: calcula a linha de produção completa de qualquer item, sem IA -- */
+const nkI = (s) =>
+  String(s)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+const receitaDe = (it) => Object.keys(RECEITAS).find((k) => RECEITAS[k].out == it);
+const nivelItem = (it) => (BRUTOS.includes(it) ? ITENS[it][2] : RECEITAS[receitaDe(it)].lv);
+function planoFab(alvo) {
+  const prof = {}; // item -> distância até o produto final (0 = o próprio)
+  const visita = (it, d) => {
+    if (prof[it] !== undefined && prof[it] >= d) return;
+    prof[it] = d;
+    if (BRUTOS.includes(it)) return;
+    const r = RECEITAS[receitaDe(it)];
+    if (!r) throw new Error("não sei fazer " + it);
+    Object.keys(r.in).forEach((x) => visita(x, d + 1));
+  };
+  visita(alvo, 0);
+  const itens = Object.keys(prof),
+    brutos = itens.filter((it) => BRUTOS.includes(it)),
+    feitos = itens.filter((it) => !BRUTOS.includes(it)),
+    fundo = Math.max(0, ...feitos.map((it) => prof[it]));
+  // extratores na coluna 0, máquinas da mais básica para a final, mercado no fim
+  const maqs = feitos.map((it) => {
+    const r = receitaDe(it);
+    return { it, r, m: RECEITAS[r].m, col: 1 + fundo - prof[it] };
+  });
+  const custo =
+    brutos.length * T.extrator.price + maqs.reduce((s, x) => s + T[x.m].price, 0) + T.mercado.price;
+  const falta = ECO.f ? [] : itens.filter((it) => nivelItem(it) > nivel()).map((it) => [it, nivelItem(it)]);
+  return { alvo, brutos, maqs, custo, falta, cols: feitos.length ? fundo + 2 : 1 };
+}
+function montaPlano(alvo) {
+  let P;
+  try {
+    P = planoFab(alvo);
+  } catch (e) {
+    return toast(e.message);
+  }
+  if (P.falta.length) {
+    const n = Math.max(...P.falta.map((x) => x[1]));
+    return toast(`🔒 ${alvo} precisa do nível ${n} (você está no ${nivel()})`);
+  }
+  if (!pay(P.custo)) return;
+  snap();
+  // monta à direita do que já existe, para não cobrir nada
+  const L = Object.values(D),
+    ox = L.length ? Math.max(...L.map((d) => d.x)) + 320 : -V.x / V.s + 20,
+    oy = L.length ? Math.min(...L.map((d) => d.y)) : -V.y / V.s + 20,
+    lin = {},
+    id = {},
+    pos = (c) => [ox + c * 270, oy + (lin[c] = (lin[c] || 0) + 1) * 250 - 250];
+  P.brutos.forEach((b) => (id[b] = add("extrator", ...pos(0), { res: b })));
+  [...P.maqs].sort((a, b) => a.col - b.col).forEach((m) => (id[m.it] = add(m.m, ...pos(m.col), { lv: 1, r: m.r })));
+  const mc = add("mercado", ...pos(P.cols));
+  P.maqs.forEach((m) => Object.keys(RECEITAS[m.r].in).forEach((i) => W.push([id[i].id, id[m.it].id])));
+  W.push([id[alvo].id, mc.id]);
+  wires();
+  save();
+  P.brutos.forEach((b) => T.extrator.act(id[b], "go", q(id[b], "[data-a=go]")));
+  $("#ai").classList.remove("open");
+  fit();
+  track("plano");
+  toast(`🏭 Linha de ${alvo} montada: ${P.brutos.length} extratores, ${P.maqs.length} máquinas`);
+}
+// Acha o item citado num pedido como "monte uma linha de celulares"
+const SINON = { moveis: "móvel", fio: "fio de cobre", fios: "fio de cobre", ferro: "barra de ferro", barras: "barra de ferro", lcd: "tela LCD" };
+function achaItem(t) {
+  const n = nkI(t);
+  if (ITENS[t]) return t;
+  for (const it of Object.keys(ITENS).sort((a, b) => b.length - a.length))
+    if (new RegExp("(^|[^a-z])" + nkI(it) + "(e?s)?([^a-z]|$)").test(n)) return it;
+  for (const [k, v] of Object.entries(SINON)) if (new RegExp("(^|[^a-z])" + k + "([^a-z]|$)").test(n)) return v;
+  return null;
+}
+function itemPedido(t) {
+  const n = nkI(t);
+  if (/\b(jogo|game|codigo|programa|comand|script|python|javascript|display|emulador|console|explique|explica|erro)/.test(n)) return null;
+  if (!/\b(faz|faca|fazer|monte|monta|montar|produz\w*|fabric\w*|linha|quero|constru\w*|cri[ae]r?|ger[ae]r?)\b/.test(n)) return null;
+  return achaItem(t);
+}
+const PEDS = [];
+function planoHTML(P, t) {
+  const cab = P.maqs.length
+    ? `🏭 <b>Linha de ${ic(P.alvo)} ${P.alvo}</b> · calculei aqui, sem gastar IA`
+    : `⛏️ <b>${ic(P.alvo)} ${P.alvo}</b> é recurso bruto: um Extrator ligado no Mercado`;
+  const lin = [
+    `<div>⛏️ Extratores: ${P.brutos.map((b) => ic(b) + " " + b).join(", ")}</div>`,
+    ...[...P.maqs]
+      .sort((a, b) => a.col - b.col)
+      .map((m) => `<div>${T[m.m].i} ${T[m.m].n}: ${esc(txtReceita(RECEITAS[m.r]))}</div>`),
+    `<div>🏪 Mercado vende ${ic(P.alvo)} ${P.alvo} (preço base $${ITENS[P.alvo][1]})</div>`,
+  ];
+  const k = PEDS.push(t) - 1,
+    bloq = P.falta.length
+      ? `<div class="nota av">🔒 Precisa do nível ${Math.max(...P.falta.map((x) => x[1]))} (você está no ${nivel()}): ${P.falta.map((x) => x[0]).join(", ")}</div>`
+      : "";
+  return `${cab}<div class=plano>${lin.join("")}</div>${bloq}<div style="display:flex;gap:6px;margin-top:6px"><button class=it style="flex:1;padding:6px" onclick="montaPlano(${JSON.stringify(P.alvo).replace(/"/g, "&quot;")})"${P.falta.length ? " disabled" : ""}>🏗 Montar${ECO.f ? "" : " ($" + P.custo.toLocaleString("pt-BR") + ")"}</button><button class=it style="flex:1;padding:6px" onclick="ask(PEDS[${k}],1)">🤖 Perguntar à IA</button></div><div class=nota>Dica: depois toque em ⬆ Nível na máquina que mais demora.</div>`;
+}
+function pedidoLocal(t) {
+  const it = itemPedido(t);
+  if (!it) return false;
+  let P;
+  try {
+    P = planoFab(it);
+  } catch (e) {
+    return false;
+  }
+  addMsg("u", t);
+  const m = document.createElement("div");
+  m.className = "msg";
+  m.innerHTML = planoHTML(P, t);
+  $("#msgs").append(m);
+  $("#msgs").scrollTop = 1e6;
+  HIST.push(
+    { role: "user", content: t },
+    {
+      role: "assistant",
+      content:
+        "Linha de " + it + ": " + P.maqs.map((x) => T[x.m].n + " (" + x.r + ")").join(" → ") + " → Mercado. (planejador local)",
+    },
+  );
+  guardaChat();
+  return true;
+}
+
+/* -- Teste de verdade: roda o código JavaScript num Worker, simulando Timer e botões -- */
+const TESTE_W = `const AF=(async()=>{}).constructor;
+onmessage=async(ev)=>{
+  const {code,lang,vars}=ev.data;let des=0,mos=0,env=0,usouTela=0,esp=0;
+  const fbs={},conta=()=>{des++};
+  const tela=(w,h)=>{usouTela=1;const k=w+"x"+h;return fbs[k]||(fbs[k]={w,h,limpar:conta,px:conta,vlinha:conta,ret:conta,sprite:conta,texto:conta,mostrar:()=>{mos++;des++}})};
+  const seq=["direita","cima","A","esquerda","baixo","B"],teclas={},S={};
+  const base={entrada:0,S,teclas,tela,enviar:()=>{env++},mostrar:()=>{env++;des++},log:()=>{},console:{log:()=>{}},esperar:()=>{if(!esp++)postMessage({esp:1});return new Promise(r=>setTimeout(r,1))},bip:()=>{},vibrar:()=>{},agora:()=>performance.now(),aleatorio:(a,b)=>Math.floor(Math.random()*(b-a+1))+a,rgb:(r,g,b)=>((255<<24)|((b&255)<<16)|((g&255)<<8)|(r&255))>>>0,lib:{dados:()=>null,tocar:()=>{},pixels:()=>null},variaveis:vars||{},comando:async()=>{},pixel:conta,retangulo:conta,linha:conta,circulo:conta,fundo:conta,limpar:conta,texto:conta,imagem:conta,tocar:()=>{},dados:()=>null,parar:()=>{throw "parado"}};
+  const E=lang=="js"?new Proxy(base,{has:()=>true,get:(t,k)=>typeof k=="symbol"?undefined:k in t?t[k]:k in self?self[k]:0,set:(t,k,v)=>{t[k]=v;return true}}):base;
+  let fn;try{fn=new AF("E","with(E){"+code+"\\n}")}catch(e){postMessage({err:"não compila: "+e.message});return}
+  for(let i=0;i<60;i++){
+    const b=seq[(i>>2)%6];for(const k of seq)teclas[k]=k==b&&i%4<2?1:0;
+    E.entrada=i%4==3?b:i+1;
+    try{await fn(E)}catch(e){if(e==="parado")break;postMessage({err:"ao rodar (quadro "+(i+1)+"): "+(e&&e.message||e)});return}
+    postMessage({vivo:i});
+  }
+  postMessage({fim:1,des,mos,env,usouTela});
+};`;
+let TURL = null;
+function testaCodigo(code, lang) {
+  return new Promise((ok) => {
+    let w;
+    try {
+      TURL = TURL || URL.createObjectURL(new Blob([TESTE_W], { type: "text/javascript" }));
+      w = new Worker(TURL);
+    } catch (e) {
+      return ok({ pulou: 1 }); // navegador sem Worker: fica só a checagem de sintaxe
+    }
+    let q0 = -1,
+      esp = 0;
+    const fim = (r) => {
+      clearTimeout(h);
+      w.terminate();
+      ok(r);
+    };
+    const h = setTimeout(
+      () =>
+        fim(
+          lang == "jsx" || (q0 < 0 && !esp)
+            ? { err: "travou: o código não termina (loop infinito?). Cada quadro deve rodar rápido e acabar; quem repete é o Timer." }
+            : { fim: 1, des: 1, laco: 1 },
+        ),
+      2500,
+    );
+    w.onmessage = (e) => {
+      if (e.data.esp) esp = 1;
+      else if (e.data.vivo !== undefined) q0 = e.data.vivo;
+      else fim(e.data);
+    };
+    w.onerror = (e) => {
+      e.preventDefault();
+      fim({ err: e.message });
+    };
+    w.postMessage({ code, lang, vars: JSON.parse(JSON.stringify(VARS)) });
+  });
+}
+// Junta os códigos JavaScript de uma resposta (blocos soltos e Comands dentro do bloco fabrica)
+function codigosJs(raw) {
+  const out = [],
+    re = /```(\w*)\n?([\s\S]*?)```/g,
+    lg = (l, c) => (l == "jsx" ? "jsx" : /^(js|javascript)$/.test(l) ? "js" : l === "" || l === undefined ? glang({ s: { code: c } }) : l);
+  let m;
+  while ((m = re.exec(raw))) {
+    const l = m[1].toLowerCase(),
+      c = m[2];
+    if (/^(js|jsx|javascript)$/.test(l)) out.push([c, lg(l), "bloco " + l]);
+    else if (l == "fabrica")
+      try {
+        const j = pj(c);
+        [...(j.aparelhos || []), ...(j.editar || [])].forEach((a) => {
+          const s = a.s || {};
+          if (s.code && /^(js|jsx|javascript)$/.test(lg(s.lang || "", s.code))) out.push([s.code, lg(s.lang || "", s.code), "aparelho " + (a.id ?? "?")]);
+        });
+      } catch (e) {}
+  }
+  return out;
+}
+async function testaResposta(raw) {
+  const E = [],
+    ok = [];
+  for (const [c, l, nome] of codigosJs(raw).slice(0, 3)) {
+    if (lint(c, l).length) continue; // erro de sintaxe já foi apontado
+    const r = await testaCodigo(c, l);
+    if (r.pulou) continue;
+    if (r.err) E.push(nome + ", " + r.err);
+    else if (r.usouTela && !r.mos) E.push(nome + ": chama tela() mas nunca fb.mostrar(), então nada aparece no Display");
+    else if (!r.des && !r.env && /tela\(|fb\.|pixel|retangulo|fundo|circulo|texto\(/.test(c))
+      E.push(nome + ": rodei 60 quadros apertando os botões e nada foi desenhado. Desenhe a tela em todo quadro.");
+    else ok.push(nome);
+  }
+  return { E, ok };
+}
+
+/* -- Mais contexto para a IA: aparelhos que faltavam na lista, jogador e atalhos -- */
+const FABK = ["extrator", "divisor", "filtroitem", "armazem", "mercado", "contrato", "venda", "mina", "fabrica", "montadora"];
+function contextoExtra() {
+  const lin = (SYS.match(/APARELHOS[^\n]*/) || [""])[0].replace(/\{[^}]*\}|\([^)]*\)/g, ""),
+    ja = new Set(lin.split(/[,:.]/).map((s) => s.trim()));
+  const outros = Object.entries(T)
+    .filter(([k]) => !ja.has(k) && !MAQ[k] && !FABK.includes(k))
+    .map(([k, t]) => k + " (" + t.n + (t.price ? ", $" + t.price : "") + (t.s && Object.keys(t.s).length ? ", s:" + JSON.stringify(t.s) : "") + ")")
+    .join("; ");
+  return `\nOUTROS APARELHOS (tipo (nome, preço, configurações padrão)): ${outros}.
+JOGADOR: nível ${nivel()}, dinheiro $${Math.floor(M)}${ECO.f ? " (modo livre: tudo grátis)" : ""}. Aparelhos com preço são pagos do dinheiro do jogador quando você monta.
+LINHA DE PRODUÇÃO COMPLETA: para montar tudo que faz um item, responda só com o bloco fabrica {"planejar":"nome do item"}. O app calcula extratores, máquinas, receitas e fios certos.
+EXPLICAR OU ANALISAR o projeto: use o PROJETO ATUAL e responda em tópicos curtos, sem blocos de código, citando os aparelhos pelo id (#3).
+TESTE: o app roda seu JavaScript simulando 60 tiques do Timer e os botões; se der erro ou não desenhar nada, você recebe o erro para corrigir.\n`;
 }
 
 let UH = [];
@@ -5855,7 +6321,7 @@ Toque em ⬆ Nível para a máquina ficar mais rápida. Veja todas as receitas e
   ],
   [
     "🤖 Assistente",
-    `A IA monta sistemas inteiros e escreve código. Ela usa uma chave grátis da Groq (⚙ no topo do painel). Também dá para usar outra IA: ⋯ › Comandos / colar de outra IA.`,
+    `A IA monta sistemas inteiros, escreve jogos, explica e conserta seu projeto. Ela testa o código sozinha antes de montar.\n• <b>Linha de produção</b>: peça "monte uma linha de celular". O planejador calcula tudo na hora, sem chave e sem gastar IA.\n• <b>Qual IA</b>: em ⚙ escolha Groq (grátis), OmniRoute (no celular), OpenRouter, Gemini ou outra. A conversa fica salva; 🗑 começa outra.\n• Também dá para colar resposta de outra IA: ⋯ › Comandos / colar de outra IA.`,
   ],
   [
     "🎮 Console de videogame",

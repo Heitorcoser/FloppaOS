@@ -213,6 +213,21 @@ canvas.px { width: 128px; height: 128px; image-rendering: pixelated; background:
 .aift > .it { flex-direction: row; justify-content: center; padding: 8px }
 .aiin { display: flex; gap: 6px }
 .aiin textarea { flex: 1 }
+.aihd span { display: flex; gap: 6px }
+#set > select { margin-top: 8px; width: 100%; font-size: 16px; padding: 8px; background: var(--in); color: var(--tx); border: 1px solid var(--bd); border-radius: 8px }
+#chips { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 0 12px 6px; scrollbar-width: none }
+#chips:empty { display: none }
+#chips button { flex: none; border: 1px solid var(--bd); background: var(--in); color: var(--tx); border-radius: 999px; padding: 6px 12px; font-size: 13px; white-space: nowrap }
+.msg { margin: 6px 0; padding: 8px; border-radius: 10px; background: var(--in); overflow-wrap: anywhere }
+.msg.u { background: var(--ac); color: #fff; white-space: pre-wrap; margin-left: 32px }
+.msg pre { background: #000; color: #4ade80; padding: 8px; border-radius: 8px; overflow: auto; font-size: 12px; margin: 6px 0 2px }
+.msg .nota { font-size: 12px; margin-top: 6px; color: var(--mu, #9aa) }
+.msg .nota.ok { color: #4ade80 }
+.msg .nota.av { color: #f59e0b }
+.plano { margin: 6px 0; display: grid; gap: 4px; font-size: 13px }
+.plano div { background: var(--card); border-radius: 8px; padding: 6px 8px }
+.digit::after { content: "▍"; animation: pisca 1s steps(2) infinite }
+@keyframes pisca { 50% { opacity: 0 } }
 .b.env { width: 56px; height: auto; background: var(--ac); color: #fff; border: 0 }
 
 /* ---------- avisos, jogo em tela cheia, emulador ---------- */

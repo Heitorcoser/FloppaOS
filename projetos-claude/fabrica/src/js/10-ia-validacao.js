@@ -93,6 +93,8 @@ function chk(raw) {
       try {
         const j = pj(c),
           ids = new Set();
+        if (j.planejar && !achaItem(String(j.planejar)))
+          E.push("planejar: item desconhecido. Use um destes: " + Object.keys(ITENS).join(", "));
         (j.aparelhos || j.devices || []).forEach((a, i) => {
           const k = nk(a.tipo || a.type);
           if (!Object.hasOwn(T, k) && !Object.hasOwn(AL, k))
@@ -135,18 +137,27 @@ function mkSys() {
     SYS.replace(/~~~/g, "```") +
     EXTRA +
     promptFabricas() +
+    contextoExtra() +
     "\nPROJETO ATUAL: " +
     JSON.stringify({ aparelhos: P, fios: W, variaveis: VARS, comandos: Object.keys(CMDS) }).slice(0, 3500) +
     langNote()
   );
 }
+// Valida a sintaxe e roda o código de verdade; se achar erro, pede para a IA corrigir (até 2 vezes)
+async function verifica(raw, w) {
+  const E = chk(raw);
+  if (E.length) return { E, ok: [] };
+  if (w && codigosJs(raw).length) w.insertAdjacentHTML("beforeend", "<div class=nota>🧪 Testando o código...</div>");
+  const r = await testaResposta(raw);
+  if (w && w.lastChild && w.lastChild.className == "nota") w.lastChild.remove();
+  return r;
+}
 async function post(w) {
-  let raw = HIST[HIST.length - 1].content;
-  for (let i = 0; i < 2 && $("#fix").checked; i++) {
-    const E = chk(raw);
-    if (!E.length) break;
+  let raw = HIST[HIST.length - 1].content,
+    V = await verifica(raw, w);
+  for (let i = 0; i < 2 && V.E.length && $("#fix").checked; i++) {
     WS = w;
-    w.textContent = "🔧 Achei " + E.length + " erro(s). Corrigindo sozinha...";
+    w.textContent = "🔧 Achei " + V.E.length + " problema(s). Corrigindo sozinha...";
     try {
       const j = await groq({
         model: $("#am").value.trim(),
@@ -156,8 +167,8 @@ async function post(w) {
           {
             role: "user",
             content:
-              "O app validou seu código e achou erros:\n- " +
-              E.join("\n- ") +
+              "O app testou sua resposta e achou problemas:\n- " +
+              V.E.join("\n- ") +
               "\nResponda de novo COMPLETO e corrigido, mesmos blocos, sem pedir desculpas.",
           },
         ],
@@ -174,21 +185,25 @@ async function post(w) {
       w.textContent = "Erro: " + e.message;
       return;
     }
+    V = await verifica(raw, w);
   }
-  const E = chk(raw);
-  if (E.length) {
-    const n = document.createElement("div");
-    n.style.cssText = "color:#f59e0b;font-size:12px;margin-top:4px";
-    n.textContent = "⚠ Ainda pode ter erro: " + E.slice(0, 3).join(" · ");
-    w.append(n);
-  } else if ($("#apl").checked) autoApply(raw);
+  const n = document.createElement("div");
+  if (V.E.length) {
+    n.className = "nota av";
+    n.textContent = "⚠ Ainda pode ter erro: " + V.E.slice(0, 3).join(" · ");
+  } else if (V.ok.length) {
+    n.className = "nota ok";
+    n.textContent = "🧪 Testei: rodou 60 tiques com os botões, sem erro, e desenhou na tela.";
+  }
+  if (n.className) w.append(n);
+  if (!V.E.length && $("#apl").checked) autoApply(raw);
 }
 function autoApply(raw) {
   const p = raw.split(/```(\w*)\n?([\s\S]*?)```/),
     x = xc(p)[0] ? xc(p) : nearCode(CB.length - 1);
   try {
     for (let k = 1; k < p.length; k += 3)
-      if (p[k].toLowerCase() == "fabrica") return build(p[k + 2], x[0], x[1]);
+      if (p[k].toLowerCase() == "fabrica") return build(p[k + 1], x[0], x[1]);
     if (x[0]) {
       snap();
       add("comand", -V.x / V.s + 10, -V.y / V.s + 10, { code: x[0], lang: x[1] });

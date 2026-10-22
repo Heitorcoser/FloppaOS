@@ -32,7 +32,7 @@ function xc(p) {
   for (let k = 1; k < p.length; k += 3) {
     const l = p[k].toLowerCase();
     if (l == "comand" || l == "javascript" || l == "js" || l == "jsx" || l == "python" || l == "py")
-      return [p[k + 2], l == "comand" ? "" : l == "jsx" ? "jsx" : l == "python" || l == "py" ? "py" : "js"];
+      return [p[k + 1], l == "comand" ? "" : l == "jsx" ? "jsx" : l == "python" || l == "py" ? "py" : "js"];
   }
   return [];
 }
@@ -123,15 +123,24 @@ function fmt(t) {
 }
 function addMsg(r, t) {
   const m = document.createElement("div");
-  m.style.cssText =
-    "margin:6px 0;padding:8px;border-radius:10px;background:" +
-    (r == "u" ? "var(--ac);color:#fff;white-space:pre-wrap" : "var(--in)");
+  m.className = "msg" + (r == "u" ? " u" : "");
   if (r == "u") m.textContent = t;
   else m.innerHTML = fmt(t);
   $("#msgs").append(m);
   $("#msgs").scrollTop = 1e6;
   return m;
 }
+const semThink = (t) =>
+  t
+    .replace(/<think>[\s\S]*?<\/think>/g, "")
+    .replace(/<think>[\s\S]*$/, "")
+    .trim();
+// Mostra a resposta enquanto ela chega (blocos de código ainda abertos viram <pre>)
+const fmtVivo = (t) =>
+  semThink(t)
+    .split("```")
+    .map((x, i) => (i % 2 ? "<pre>" + esc(x.replace(/^\w*\n/, "")) + "</pre>" : md(x)))
+    .join("");
 const AL = {
   variavel: "vari",
   monitor: "vari",
@@ -186,6 +195,14 @@ function pj(t) {
 }
 function build(j, xc, xl) {
   if (typeof j == "string") j = pj(j);
+  if (j.planejar) return montaPlano(achaItem(String(j.planejar)) || String(j.planejar));
+  // aparelhos com preço são pagos, como no catálogo
+  const custo = (j.aparelhos || j.devices || j.dispositivos || []).reduce((s, a) => {
+    const k = nk(a.tipo || a.type),
+      t = T[Object.hasOwn(T, k) ? k : AL[k]];
+    return s + ((t && t.price) || 0);
+  }, 0);
+  if (custo && !pay(custo)) return;
   snap();
   (j.remover || []).forEach((i) => D[i] && del(+i));
   (j.editar || []).forEach((e) => {
@@ -323,23 +340,24 @@ function cb(n, a) {
     toast("Erro: " + e.message);
   }
 }
-async function ask() {
-  const k = $("#ak").value.trim(),
-    t = $("#ain").value.trim();
+async function ask(txt, direto) {
+  const t = String(txt ?? $("#ain").value).trim();
   if (!t) return;
   track("ia");
-  if (!k) {
-    toast("Cole sua chave da Groq em ⚙");
-    $("#set").open = true;
-    return;
-  }
-  try {
-    localStorage.setItem("fabk", k);
-    localStorage.setItem("fabm2", $("#am").value);
-  } catch (e) {}
+  provGuarda();
   if (LAST && /^(continue|continua|continuar|segue|prossiga)\W*$/i.test(t)) {
     $("#ain").value = "";
     autoCont();
+    return;
+  }
+  // pedidos de linha de produção são resolvidos aqui mesmo, sem gastar IA
+  if (!direto && pedidoLocal(t)) {
+    $("#ain").value = "";
+    return;
+  }
+  if (!$("#ak").value.trim() && !PROV[PC.p].semChave) {
+    toast("Cole sua chave em ⚙");
+    $("#set").open = true;
     return;
   }
   LAST = null;
@@ -348,32 +366,58 @@ async function ask() {
   HIST.push({ role: "user", content: t });
   const w = addMsg("a", "…");
   WS = w;
+  let tv = 0;
+  const vivo = (a, pensa) => {
+    const n = performance.now();
+    if (n - tv < 90) return;
+    tv = n;
+    w.classList.add("digit");
+    w.innerHTML = a.trim()
+      ? fmtVivo(a)
+      : `<span class=mu>💭 pensando${pensa ? " (" + pensa.length + " letras)" : ""}...</span>`;
+    $("#msgs").scrollTop = 1e6;
+  };
   try {
-    const sys = mkSys();
-    const j = await groq({
-      model: $("#am").value.trim(),
-      messages: [{ role: "system", content: sys }, ...HIST.slice(-10)],
-      temperature: 0.2,
-    });
-    const a = j.choices[0].message.content;
+    const j = await groq(
+      {
+        model: $("#am").value.trim(),
+        messages: [{ role: "system", content: mkSys() }, ...HIST.slice(-10)],
+        temperature: 0.2,
+      },
+      vivo,
+    );
+    w.classList.remove("digit");
+    const a = j.choices[0].message.content || "";
+    if (!semThink(a))
+      throw new Error(
+        j.choices[0].finish_reason == "length"
+          ? "a IA gastou todo o limite pensando e não respondeu. Aumente o tamanho em ⚙ ou desligue Pensar mais."
+          : "a IA respondeu vazio. Tente outro modelo em ⚙.",
+      );
     HIST.push({ role: "assistant", content: a });
     showAns(w, a, j);
     if (LAST && $("#auto").checked) await autoCont();
     if (!LAST) await post(w);
+    guardaChat();
   } catch (e) {
+    w.classList.remove("digit");
     HIST.pop();
     w.textContent =
       e instanceof TypeError
-        ? "Não consegui falar com a Groq. Se esta página está aberta pelo link do Claude, o navegador bloqueia chamadas para sites externos. Abra o arquivo HTML direto no navegador do aparelho."
+        ? PC.p == "omni"
+          ? "Não achei o OmniRoute. Abra o Termux, rode omniroute e deixe aberto. Este HTML precisa estar aberto direto no navegador do celular."
+          : "Não consegui falar com " +
+            provNome() +
+            ". Veja a internet. Se esta página está aberta pelo link do Claude, o navegador bloqueia chamadas externas: abra o arquivo HTML direto no navegador."
         : "Erro: " + e.message;
-    if (/does not exist/.test(e.message)) setTimeout(listModels, 300);
+    if (/does not exist|not found|model/i.test(e.message)) setTimeout(listModels, 300);
   }
 }
 let LAST = null,
   WS = null;
 async function waitUI(s) {
   for (let i = Math.ceil(s) + 1; i > 0; i--) {
-    if (WS) WS.textContent = "⏳ Limite da Groq: continuando em " + i + "s...";
+    if (WS) WS.textContent = "⏳ Limite da " + provNome() + ": continuando em " + i + "s...";
     await sl(1000);
   }
 }
@@ -443,68 +487,122 @@ async function autoCont() {
     if (!(await contAns())) break;
   }
 }
-async function groq(body) {
-  const k = $("#ak").value.trim();
-  let mt = Math.max(200, +$("#at").value || 800),
+// Fala com qualquer serviço no formato OpenAI. Com "vivo", recebe a resposta aos pedaços (streaming).
+async function groq(body, vivo) {
+  provGuarda();
+  const k = $("#ak").value.trim(),
+    url = provURL() + "/chat/completions";
+  let mt = Math.max(200, +$("#at").value || 1200),
     ef = 1,
-    rl = 0;
+    rl = 0,
+    st = !!vivo;
   for (let i = 0; i < 14; i++) {
-    const b = { ...body, max_tokens: mt };
-    if (ef && !$("#think").checked) b.reasoning_effort = "none";
-    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + k },
-      body: JSON.stringify(b),
-    });
-    const j = await r.json();
+    const b = { ...body, max_tokens: mt },
+      h = { "Content-Type": "application/json" };
+    if (st) b.stream = true;
+    if (PC.p == "groq" && ef && !$("#think").checked) b.reasoning_effort = "none";
+    if (k) h.Authorization = "Bearer " + k;
+    const r = await fetch(url, { method: "POST", headers: h, body: JSON.stringify(b) });
+    if (r.ok && st && /event-stream/.test(r.headers.get("content-type") || "")) return lerStream(r, vivo);
+    let j = {};
+    try {
+      j = await r.json();
+    } catch (e) {
+      if (r.ok) throw new Error("resposta estranha do servidor");
+    }
+    if (Array.isArray(j)) j = j[0] || {};
     if (r.ok) return j;
-    const m = (j.error && j.error.message) || String(r.status),
+    const m = String((j.error && (j.error.message || j.error)) || "erro " + r.status),
       lim = m.match(/Limit (\d+)/);
     if (/reasoning/i.test(m) && ef) {
       ef = 0;
+      continue;
+    }
+    if (/stream/i.test(m) && st) {
+      st = false;
       continue;
     }
     if (/too large|max_tokens/i.test(m) && lim && mt > 200) {
       mt = Math.max(200, Math.min(mt - 100, +lim[1] - 150));
       continue;
     }
-    if (/rate limit/i.test(m)) {
+    if (/rate limit|quota|429/i.test(m) || r.status == 429) {
       const t = m.match(/try again in (?:(\d+)m)?([\d.]+)s/i),
         w = t ? +(t[1] || 0) * 60 + +t[2] : 15;
       if (w <= 75 && rl++ < 4) {
         await waitUI(w);
         continue;
       }
-      throw new Error("Limite da Groq atingido. Tente de novo em " + Math.ceil(w) + "s.");
+      throw new Error("Limite da " + provNome() + " atingido. Tente de novo em " + Math.ceil(w) + "s.");
     }
+    if (r.status == 401 || /api key|unauthorized|invalid.*key/i.test(m))
+      throw new Error("chave recusada pela " + provNome() + ". Confira a chave em ⚙.");
     throw new Error(m);
   }
   throw new Error("Não deu certo depois de várias tentativas");
 }
+async function lerStream(r, vivo) {
+  const rd = r.body.getReader(),
+    dec = new TextDecoder();
+  let buf = "",
+    txt = "",
+    pensa = "",
+    fin = null;
+  for (;;) {
+    const { value, done } = await rd.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const l = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (!l.startsWith("data:")) continue;
+      const dd = l.slice(5).trim();
+      if (dd == "[DONE]") continue;
+      let j;
+      try {
+        j = JSON.parse(dd);
+      } catch (e) {
+        continue;
+      }
+      if (j.error) throw new Error(j.error.message || String(j.error));
+      const c = j.choices && j.choices[0];
+      if (!c) continue;
+      const dt = c.delta || {};
+      if (dt.content) txt += dt.content;
+      if (dt.reasoning || dt.reasoning_content) pensa += dt.reasoning || dt.reasoning_content;
+      if (c.finish_reason) fin = c.finish_reason;
+      vivo(txt, pensa);
+    }
+  }
+  return { choices: [{ message: { content: txt }, finish_reason: fin || "stop" }] };
+}
 async function listModels() {
+  provGuarda();
   const k = $("#ak").value.trim();
-  if (!k) {
+  if (!k && !PROV[PC.p].semChave) {
     toast("Cole a chave primeiro");
     return;
   }
   const w = addMsg("a", "Buscando modelos…");
   try {
-    const r = await fetch("https://api.groq.com/openai/v1/models", {
-      headers: { Authorization: "Bearer " + k },
+    const r = await fetch(provURL() + "/models", {
+      headers: k ? { Authorization: "Bearer " + k } : {},
     });
     const j = await r.json();
     if (!r.ok) throw new Error((j.error && j.error.message) || r.status);
     const ids = j.data
         .map((m) => m.id)
-        .filter((i) => !/whisper|guard|tts|orpheus/.test(i))
+        .map((i) => i.replace(/^models\//, ""))
+        .filter((i) => !/whisper|guard|tts|orpheus|embed|image|vision-only|audio/.test(i))
         .sort(),
-      qw = ids.filter((i) => /qwen/i.test(i)),
+      qw = PC.p == "groq" ? ids.filter((i) => /qwen/i.test(i)) : [],
       L = qw.length ? qw : ids;
     w.innerHTML =
       "<div>" +
       (qw.length
         ? "Modelos Qwen da sua conta. Toque para usar:"
-        : "Sua conta não tem Qwen. Modelos disponíveis, toque para usar:") +
+        : "Modelos disponíveis, toque para usar:") +
       "</div>" +
       L.map(
         (i) =>
@@ -520,12 +618,112 @@ async function listModels() {
 }
 function useM(i) {
   $("#am").value = i;
-  try {
-    localStorage.setItem("fabm2", i);
-  } catch (e) {}
+  provGuarda();
   toast("Modelo: " + i);
 }
+
+/* ---- provedores de IA (todos no formato OpenAI) ---- */
+const PROV = {
+  groq: {
+    n: "Groq (grátis)",
+    url: "https://api.groq.com/openai/v1",
+    m: "qwen/qwen3.6-27b",
+    d: "Chave grátis em console.groq.com › API Keys (começa com gsk_).",
+  },
+  omni: {
+    n: "OmniRoute (no celular)",
+    url: "http://localhost:20128/v1",
+    m: "",
+    semChave: 1,
+    d: "Rode omniroute no Termux e deixe aberto. Chave e modelo ficam no painel (localhost:20128). Abra este HTML direto no navegador.",
+  },
+  openrouter: {
+    n: "OpenRouter",
+    url: "https://openrouter.ai/api/v1",
+    m: "qwen/qwen3-coder:free",
+    d: "Chave em openrouter.ai/keys. Modelos que terminam em :free são grátis.",
+  },
+  gemini: {
+    n: "Google Gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai",
+    m: "gemini-2.5-flash",
+    d: "Chave grátis em aistudio.google.com/apikey.",
+  },
+  outro: {
+    n: "Outro (formato OpenAI)",
+    url: "",
+    m: "",
+    semChave: 1,
+    d: "Qualquer serviço no formato OpenAI: coloque o endereço que termina em /v1.",
+  },
+};
+let PC = { p: "groq", k: {}, m: {}, u: {} };
 try {
-  $("#ak").value = localStorage.getItem("fabk") || "";
-  $("#am").value = localStorage.getItem("fabm2") || "qwen/qwen3.6-27b";
+  Object.assign(PC, JSON.parse(localStorage.getItem("fabprov") || "{}"));
+  // chave e modelo da versão antiga (só Groq)
+  if (!PC.k.groq && localStorage.getItem("fabk")) PC.k.groq = localStorage.getItem("fabk");
+  if (!PC.m.groq && localStorage.getItem("fabm2")) PC.m.groq = localStorage.getItem("fabm2");
 } catch (e) {}
+if (!PROV[PC.p]) PC.p = "groq";
+const provURL = () =>
+  ($("#au").value.trim() || PROV[PC.p].url).replace(/\/+$/, "").replace(/\/chat\/completions$/, "");
+const provNome = () => PROV[PC.p].n.replace(/ \(.*/, "");
+function provUI() {
+  const P = PROV[PC.p];
+  $("#ap").innerHTML = Object.entries(PROV)
+    .map(([k, v]) => `<option value=${k}${k == PC.p ? " selected" : ""}>${v.n}</option>`)
+    .join("");
+  $("#ak").value = PC.k[PC.p] || "";
+  $("#am").value = PC.m[PC.p] || P.m;
+  $("#au").value = PC.u[PC.p] || P.url;
+  $("#au").style.display = PC.p == "omni" || PC.p == "outro" ? "" : "none";
+  $("#apd").textContent = P.d;
+}
+function provGuarda() {
+  PC.k[PC.p] = $("#ak").value.trim();
+  PC.m[PC.p] = $("#am").value.trim();
+  PC.u[PC.p] = $("#au").value.trim();
+  try {
+    localStorage.setItem("fabprov", JSON.stringify(PC));
+  } catch (e) {}
+}
+function provTroca() {
+  provGuarda();
+  PC.p = $("#ap").value;
+  provUI();
+}
+provUI();
+
+/* ---- conversa: memória, sugestões ---- */
+function guardaChat() {
+  try {
+    localStorage.setItem("fabchat", JSON.stringify(HIST.slice(-16)));
+  } catch (e) {}
+}
+function boasVindas() {
+  const m = document.createElement("div");
+  m.className = "mu";
+  m.textContent =
+    "Oi! Sou a assistente. Monto linhas de produção completas (sem gastar IA), escrevo jogos, explico e conserto seu projeto. Toque numa sugestão ou peça do seu jeito.";
+  $("#msgs").append(m);
+}
+function novaConversa() {
+  HIST = [];
+  LAST = null;
+  guardaChat();
+  $("#msgs").innerHTML = "";
+  boasVindas();
+}
+const CHIPS = [
+  ["🏭 Linha de celular", "Monte uma linha de produção de celular"],
+  ["🎮 Jogo da cobrinha", "Faça um jogo da cobrinha"],
+  ["🔍 Explicar meu projeto", "Explique o que meu projeto atual faz, aparelho por aparelho, e diga o que melhorar."],
+  ["🩺 Achar erros", "Ache e conserte os erros dos Comands do meu projeto (use editar)."],
+  ["💰 O que construir?", "Olhando meu projeto, nível e dinheiro, o que devo construir agora para ganhar mais?"],
+];
+$("#chips").innerHTML = CHIPS.map(([l], i) => `<button onclick="ask(CHIPS[${i}][1])">${l}</button>`).join("");
+try {
+  HIST = JSON.parse(localStorage.getItem("fabchat") || "[]");
+} catch (e) {}
+if (!HIST.length) boasVindas();
+HIST.forEach((h) => addMsg(h.role == "user" ? "u" : "a", h.content));

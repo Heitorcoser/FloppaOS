@@ -180,7 +180,7 @@ Toque em ⬆ Nível para a máquina ficar mais rápida. Veja todas as receitas e
   ],
   [
     "🤖 Assistente",
-    `A IA monta sistemas inteiros e escreve código. Ela usa uma chave grátis da Groq (⚙ no topo do painel). Também dá para usar outra IA: ⋯ › Comandos / colar de outra IA.`,
+    `A IA monta sistemas inteiros, escreve jogos, explica e conserta seu projeto. Ela testa o código sozinha antes de montar.\n• <b>Linha de produção</b>: peça "monte uma linha de celular". O planejador calcula tudo na hora, sem chave e sem gastar IA.\n• <b>Qual IA</b>: em ⚙ escolha Groq (grátis), OmniRoute (no celular), OpenRouter, Gemini ou outra. A conversa fica salva; 🗑 começa outra.\n• Também dá para colar resposta de outra IA: ⋯ › Comandos / colar de outra IA.`,
   ],
   [
     "🎮 Console de videogame",
