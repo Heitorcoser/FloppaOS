@@ -30,7 +30,7 @@ Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Flopp
 **Conferir se a 26 baixou inteira (SHA-256):**
 
 ```
-9dcc984d7ca7cd21bd769f7dddaa651a1f6e88621c614884f38c53c9e18049f9
+ac6a8954fdd28083ab5ca02fa68c235afe270be73cbe88fc7a2d145a7ea318b2
 ```
 
 - Windows (PowerShell): `Get-FileHash .\meuos-v26.iso`

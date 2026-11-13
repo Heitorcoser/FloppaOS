@@ -105,6 +105,11 @@ Abra pelo menu do Floppa, pelo icone na area de trabalho ou com **Super + I**. T
 Visualizador de imagens (Ristretto), compactador de arquivos (Xarchiver, direto no gerenciador de arquivos),
 calculadora (Galculator), gerenciador de tarefas, captura de tela, mixer de som e player de video (mpv).
 
+## Corrigido
+- **VirtualBox em PC com WSL2/Hyper-V**: o boot parava com "Kernel panic - IO-APIC + timer doesn't work".
+  O Hyper-V atrasa o tique do relogio da maquina virtual e o kernel desistia. Agora todas as opcoes do
+  menu e o sistema instalado ligam com `no_timer_check` (o mesmo que Ubuntu e Fedora usam em maquina virtual).
+
 ## Limites honestos
 - Wi-Fi e Bluetooth nao aparecem em maquina virtual (la a rede e sempre "cabo").
 - Os efeitos "Completo" pedem placa de video com OpenGL; em VM o Floppa usa o modo Leve.
