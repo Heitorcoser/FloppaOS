@@ -3,6 +3,31 @@
 O MeuOS (Floppa Edition) agora se chama **Floppa OS**. A versao 26 **Basic** traz tudo da 1.03 e muda
 o jeito de usar o sistema: mais opcoes, num lugar so, e mais leve. ISO: `iso/meuos-v26.iso`
 
+## Floppa Mods: o sistema do seu jeito
+Abra pelo menu (**Floppa Mods**), pela Floppa Central (Aparencia ou Ferramentas) ou com `floppa-mods`.
+Mods mudam temas, cores, fundos, fontes, o painel, a Floppa Busca, atalhos de teclado e trazem jogos e
+programas em FloopyC. **Desativar um mod desfaz tudo** (e nunca apaga nada seu).
+
+- **Loja de mods**: mods oficiais do Floppa (assinados) e da comunidade. Os oficiais ja vem na ISO e
+  instalam mesmo sem internet.
+- **Floppa Escudo**: antes de instalar, confere o mod inteiro **sem rodar nada**: programas compilados,
+  arquivos disfarcados, pacotes escondidos, links e caminhos que saem da pasta do mod, bombas de
+  compressao, SVG com codigo, virus de teste, lista negra, ClamAV (se instalado) e scripts que tentam
+  virar administrador, baixar e rodar coisas, abrir acesso remoto, apagar arquivos, se esconder no sistema,
+  roubar senhas, espionar o teclado, minerar criptomoeda ou se disfarcar (`s\udo`, `"su"do`, `$CMD`...).
+  Testado com 175 casos (mods normais, maliciosos, disfarces e 300 pacotes corrompidos).
+- **Quarentena de 1 hora** para mods da comunidade: confere ao chegar e de novo no fim da hora, com a
+  lista negra atualizada (mod denunciado nesse tempo nao entra; pacote trocado tambem nao).
+- **Jaula**: programas de mods rodam isolados (bubblewrap): sem a sua pasta pessoal, sem mexer no
+  sistema, sem internet e sem D-Bus. Mesmo um script que enganasse o Escudo nao alcanca nada seu.
+- **Nada como administrador**: tudo fica na sua pasta pessoal.
+- **Mods oficiais**: Floppa Neon, Floppa estilo Mac, Fundos Pixel do Floppa, Busca Arco-iris, o jogo
+  **Floppa Diz** (memoria com som) e a **Cola do Floppa** (Super+F1 mostra todos os atalhos).
+- Crie o seu: `/usr/share/meuos/floppa-mods/COMO-CRIAR-MODS.md` e `floppa-mods verificar meu.floppamod`.
+- **Ja esta na 26?** O Floppa Mods chega pelo **Floppa Update** (pacote 0007). Para os programas e jogos dos
+  mods rodarem na jaula, instale a jaula uma vez: `sudo apt install bubblewrap` (temas, fundos e painel
+  funcionam sem ela). A proxima ISO ja vem com tudo.
+
 ## Otimizado: mais leve e mais rapido
 - **ISO e sistema mais enxutos**: saem os manuais, a documentacao e as traducoes de idiomas que nao sao
   portugues ou ingles (uns 300 MB a menos). O CD liga e instala mais rapido, e as atualizacoes nao trazem

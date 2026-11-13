@@ -45,6 +45,7 @@ Notas da versão: [`NOTAS-DE-ATUALIZACAO-26.md`](NOTAS-DE-ATUALIZACAO-26.md) (an
 
 | | Recurso |
 |---|---|
+| 🧩 | **Floppa Mods** *(26)*: mude tudo com mods oficiais e da comunidade (temas, painel, fundos, atalhos, jogos). Cada mod passa pelo **Floppa Escudo**, fica **1 hora em quarentena** e roda numa **jaula**. Veja [`mods/`](mods/) |
 | ⚙️ | **Floppa Central** *(26)*: todas as configurações num lugar só (Wi-Fi, Bluetooth, som, tela, energia, firewall, teclado, armazenamento) |
 | 🎨 | **Visual novo** *(26)*: tema escuro/claro, ícones Papirus, efeitos que se adaptam ao PC, **Floppa Busca** (Alt+Espaço) |
 | 🎮 | **Modo Jogo** *(26)*: Super+G deixa tudo no máximo para jogar; desligou, volta como estava. Com **GameMode** |
