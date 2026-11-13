@@ -23,6 +23,10 @@ Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Flopp
 | 1.03 beta | `meuos-v1.03-beta.iso` | — | Na página de [**Releases**](https://github.com/Heitorcoser/FloppaOS/releases) |
 | 1.02 | `meuos-v1.02.iso` | ~1,3 GB | [**Baixar agora**](https://github.com/Heitorcoser/FloppaOS/releases/download/FloppaOS/meuos-v1.02.iso) |
 
+> 💡 **Baixe bem mais rápido:** cole o link num gerenciador de downloads com várias conexões
+> (ex.: **AB Download Manager**, IDM ou `aria2c -x 16 -s 16 LINK`) e use **16 conexões**.
+> O GitHub manda cada conexão devagar, mas juntas somam: no teste, a ISO caiu de ~43 min para ~6 min.
+
 **Conferir se a 26 baixou inteira (SHA-256):**
 
 ```
