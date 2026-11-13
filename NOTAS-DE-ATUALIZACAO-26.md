@@ -7,8 +7,8 @@ o jeito de usar o sistema: mais opcoes, num lugar so, e mais leve. ISO: `iso/meu
 - **ISO e sistema mais enxutos**: saem os manuais, a documentacao e as traducoes de idiomas que nao sao
   portugues ou ingles (uns 300 MB a menos). O CD liga e instala mais rapido, e as atualizacoes nao trazem
   isso de volta.
-- **Memoria comprimida (zram) melhor**: agora usa o **zstd** (cabe ~30% mais coisa que antes) e o tamanho
-  se ajusta a RAM: PC com pouca memoria ganha mais zram.
+- **Memoria comprimida (zram) melhor**: o tamanho se ajusta a RAM (PC com pouca memoria ganha mais zram) e,
+  com menos de 3 GB, usa o **zstd** (cabe ~30% mais coisa); com mais memoria fica no lz4, que e mais rapido.
 - **Desktop mais responsivo**: o kernel agora roda em modo `preempt=full` (o mouse, o som e as janelas
   nao engasgam com o processador ocupado) e sem o "cao de guarda" que acordava o processador a toa.
 - **Copiar para pendrive nao trava mais a tela**: o sistema grava em pedacos menores e mais cedo.
@@ -55,8 +55,9 @@ Abra pelo menu do Floppa, pelo icone na area de trabalho ou com **Super + I**. T
   bandeja, som, bateria, avisos, relogio e "mostrar a area de trabalho".
 - **Efeitos visuais automaticos** (`floppa-visual`): o Floppa olha a memoria, a placa de video e se e maquina
   virtual e escolhe sozinho:
-  - **Desligado** em PC com pouca memoria (o mais rapido);
-  - **Leve** (sombras, quase nao pesa) em maquina virtual e PC sem placa de video;
+  - **Desligado** em PC com pouca memoria, em **maquina virtual** e em PC sem placa de video (o mais rapido:
+    sem placa de video os efeitos rodariam no processador e deixariam o navegador lento);
+  - **Leve** (sombras, quase nao pesa) com placa de video e pouca memoria;
   - **Completo** (cantos arredondados, sombras, desfoque, animacoes) com placa de video de verdade.
     Em jogo de tela cheia os efeitos saem da frente sozinhos (mais FPS).
 - **Floppa Busca**: aperte **Alt + Espaco** (ou Super + S) e digite: programas, janelas abertas e arquivos.
@@ -109,6 +110,9 @@ calculadora (Galculator), gerenciador de tarefas, captura de tela, mixer de som 
 - **VirtualBox em PC com WSL2/Hyper-V**: o boot parava com "Kernel panic - IO-APIC + timer doesn't work".
   O Hyper-V atrasa o tique do relogio da maquina virtual e o kernel desistia. Agora todas as opcoes do
   menu e o sistema instalado ligam com `no_timer_check` (o mesmo que Ubuntu e Fedora usam em maquina virtual).
+- **Navegador mais lento que na 1.03 em maquina virtual**: os efeitos visuais ligavam no modo "Leve" sem placa de
+  video (o compositor rodava no processador). Agora ficam desligados em maquina virtual, a zram usa o lz4 (mais
+  rapido) com 3 GB de RAM ou mais e a swappiness voltou a 100. Quem ja esta na 26 recebe pelo **Floppa Update**.
 
 ## Limites honestos
 - Wi-Fi e Bluetooth nao aparecem em maquina virtual (la a rede e sempre "cabo").

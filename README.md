@@ -30,7 +30,7 @@ Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Flopp
 **Conferir se a 26 baixou inteira (SHA-256):**
 
 ```
-ac6a8954fdd28083ab5ca02fa68c235afe270be73cbe88fc7a2d145a7ea318b2
+5513c0540291c1d24ef74a73e089636f9803969ca4bc0d2b5acfc928aa16676a
 ```
 
 - Windows (PowerShell): `Get-FileHash .\meuos-v26.iso`
@@ -48,7 +48,7 @@ Notas da versão: [`NOTAS-DE-ATUALIZACAO-26.md`](NOTAS-DE-ATUALIZACAO-26.md) (an
 | ⚙️ | **Floppa Central** *(26)*: todas as configurações num lugar só (Wi-Fi, Bluetooth, som, tela, energia, firewall, teclado, armazenamento) |
 | 🎨 | **Visual novo** *(26)*: tema escuro/claro, ícones Papirus, efeitos que se adaptam ao PC, **Floppa Busca** (Alt+Espaço) |
 | 🎮 | **Modo Jogo** *(26)*: Super+G deixa tudo no máximo para jogar; desligou, volta como estava. Com **GameMode** |
-| ⚡ | **Otimizado** *(26)*: ~300 MB mais leve, zram com zstd, kernel `preempt=full`, boot mais rápido |
+| ⚡ | **Otimizado** *(26)*: ~300 MB mais leve, zram ajustada à RAM, kernel `preempt=full`, boot mais rápido |
 | 💻 | **Notebooks** *(26)*: Wi-Fi, Bluetooth, bateria, brilho, touchpad, luz noturna com horário |
 | 🛡️ | **Mais seguro** *(26)*: firewall ligado de fábrica e conta root travada |
 | 📋 | **Super+V** *(26)*: histórico da área de transferência, igual ao Windows |
