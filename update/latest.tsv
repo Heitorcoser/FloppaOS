@@ -9,3 +9,4 @@ ISO|26|meuos-v26.iso|-|Floppa OS 26 Basic: Floppa Central, visual novo, Modo Jog
 7|26|floppa-update-0007.tar.gz|9872b71b93cc1ec14035f9292ff5d0052f12aa962565d21e528f41ba534d9b38|Floppa Mods: loja de mods com Floppa Escudo, quarentena de 1 hora, jaula e 6 mods oficiais
 8|26|floppa-update-0008.tar.gz|82b788208989ee2fc2ab6be80cc7211dcc5ed496211165a651ec236d5af3a0d9|Corrige a instalacao com usuario novo (o sudo ficou invalido) e traz o Floppa Roblox: Roblox (Sober) e Roblox Studio com um clique, Flatpak e Flathub, Windows (Wine) com mais opcoes
 9|26|floppa-update-0009.tar.gz|ae29d95124edd2af74821c4a7f74f8345e856ececd5e08f0ec37934ef1665ed9|Floppa Roblox: corrige o aviso falso de sem internet ao ligar a loja Flathub
+10|26|floppa-update-0010.tar.gz|dfe758a2fcdedfb8699d1011cf3a84627197445d409e4d1e670fad625380bc5e|Roblox e Steam: acerta o relogio atrasado antes de baixar (o apt dizia que o Debian nao estava assinado)
