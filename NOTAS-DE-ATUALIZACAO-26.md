@@ -132,6 +132,12 @@ Visualizador de imagens (Ristretto), compactador de arquivos (Xarchiver, direto 
 calculadora (Galculator), gerenciador de tarefas, captura de tela, mixer de som e player de video (mpv).
 
 ## Corrigido
+- **"O sistema esquece a senha e pede para instalar de novo"**: era o CD/ISO que ficava no leitor depois de
+  instalar (comum no VirtualBox): o computador ligava o CD de novo, que e so um modo de teste (nada fica
+  salvo) e abre o instalador. Agora o menu do CD **procura o Floppa OS instalado** em qualquer disco e, se
+  achar, a 1a opcao (a que liga sozinha) e **"Ligar o Floppa OS instalado neste computador"**. O instalador
+  avisa que o sistema ja esta instalado antes de abrir, e a Floppa Central mostra quando voce esta no modo
+  de teste (inclusive ao trocar a senha).
 - **VirtualBox em PC com WSL2/Hyper-V**: o boot parava com "Kernel panic - IO-APIC + timer doesn't work".
   O Hyper-V atrasa o tique do relogio da maquina virtual e o kernel desistia. Agora todas as opcoes do
   menu e o sistema instalado ligam com `no_timer_check` (o mesmo que Ubuntu e Fedora usam em maquina virtual).
