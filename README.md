@@ -30,7 +30,7 @@ Um sistema operacional feito do zero, com **Linux + XFCE**, o assistente **Flopp
 **Conferir se a 26 baixou inteira (SHA-256):**
 
 ```
-c8aaa3bfe84bb6b3894d6906540b37c56823396e20215aa61733b2e1263b1c17
+9c41c935ed4756caed48f1b3845c5fbb39b601c38191b35321182aa7c5611504
 ```
 
 - Windows (PowerShell): `Get-FileHash .\meuos-v26.iso`
@@ -66,7 +66,8 @@ Notas da versão: [`NOTAS-DE-ATUALIZACAO-26.md`](NOTAS-DE-ATUALIZACAO-26.md) (an
 | 🔄 | **Floppa Update**: o sistema se atualiza sozinho, com pacotes assinados |
 | 📦 | **Conteúdo adicional**: baixe extras como o **FloppyMakes** |
 | 🐍 | **Python**, **JavaScript** (Node) e **FloopyC** prontos para usar |
-| 🍷 | **Wine**: roda programas e jogos do Windows (`.exe`) |
+| 🍷 | **Wine**: roda programas e jogos do Windows (`.exe`); prepara para jogos/programas, .NET, DXVK e VKD3D *(26)* |
+| 🟥 | **Floppa Roblox** *(26)*: Roblox (Sober) e Roblox Studio (Vinegar) com um clique, com **Flatpak + Flathub** |
 | 🎮 | Jogos feitos em FloopyC: cobra, adivinha o número, pedra-papel-tesoura, peixes, piano |
 | 🔊 | **Som e voz**: o FloopyC toca notas e fala em voz alta |
 | 🖼️ | Troca de **tela de fundo** e **histórico de versões** dentro do sistema |
@@ -153,7 +154,7 @@ Quer publicar conteúdo para o MeuOS? Veja [`extras/README.md`](extras/README.md
 
 | Versão | Novidades |
 |---|---|
-| **26 Basic** | Novo nome (Floppa OS). Floppa Central, visual novo, Floppa Busca, Modo Jogo, Armazenamento, Super+V, luz noturna, notebooks, firewall, sistema ~300 MB mais leve e mais rápido |
+| **26 Basic** | Novo nome (Floppa OS). Floppa Central, visual novo, Floppa Busca, Modo Jogo, Armazenamento, Super+V, luz noturna, notebooks, firewall, sistema ~300 MB mais leve e mais rápido, Floppa Mods, Floppa Roblox, Flatpak/Flathub |
 | 1.03 | Instalador mais seguro, tela azul do Floppa, Liberar espaço, Recuperar arquivos, Gerenciador de programas, canal estável/beta no Floppa Update |
 | 1.03 beta | Instalador ao lado do Windows (dual boot), em partição existente, GParted, escolha do nome de usuário, Floppa Games (Steam, drivers de vídeo) |
 | **1.02** | Instalador no disco, Floppa Otimizer, notas de atualização, servidor de extras no GitHub |
