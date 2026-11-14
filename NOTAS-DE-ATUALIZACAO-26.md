@@ -3,6 +3,28 @@
 O MeuOS (Floppa Edition) agora se chama **Floppa OS**. A versao 26 **Basic** traz tudo da 1.03 e muda
 o jeito de usar o sistema: mais opcoes, num lugar so, e mais leve. ISO: `iso/meuos-v26.iso`
 
+## Floppa Roblox: Roblox com um clique (Floppa Update 0008)
+Abra pelo menu (**Floppa Roblox**), pela Floppa Central (Ferramentas), pelo Floppa Games ou com `floppa-roblox`.
+
+- **Roblox (Sober)**: o Roblox de Android rodando direto no Linux. Entre com a sua conta normal.
+- **Roblox Studio (Vinegar)**: o Studio de Windows rodando pelo Wine, para criar jogos.
+- Na primeira vez ele instala sozinho o **Flatpak**, liga a loja **Flathub** e baixa o app (1 a 2 GB);
+  pede a sua senha num terminal. Depois e so clicar em Jogar.
+- **"Meu computador roda?"**: confere placa de video (3D), memoria, espaco e se esta no modo de teste.
+- Abrir o instalador do Roblox de Windows no Wine agora avisa e leva para o Floppa Roblox.
+- Com o Flathub ligado, o **terminal** instala qualquer app de la: `flatpak search NOME` e
+  `flatpak install flathub NOME`. O Terminal tambem ganhou um atalho na Floppa Central.
+- Por que nao o Roblox de Windows? O anti-cheat dele (Hyperion) bloqueia o Wine. O de Mac nao roda no Linux.
+  O Sober e o Vinegar sao da comunidade (vinegarhq.org), nao da Roblox.
+
+## Windows (Wine) melhorado (Floppa Update 0008)
+- **Preparar para jogos** (Visual C++, DirectX 9/10/11, XAudio, controles) e **Preparar para programas**
+  (fontes do Windows, GDI+, MSXML, RichEdit) com um clique, e **.NET Framework 4.8**.
+- **VKD3D** (jogos DirectX 12) alem do DXVK; os dois conferem antes se a placa de video tem Vulkan.
+- Escolher a **versao do Windows** (7, 10 ou 11).
+- Corrigido: a ISO 26 tinha ido com o gerenciador de Windows e o Floppa Games **antigos** (sem Steam com
+  ajustes, sem diagnostico de erros e sem o disco dos jogos na Pasta Compartilhada). Voltaram.
+
 ## Floppa Mods: o sistema do seu jeito
 Abra pelo menu (**Floppa Mods**), pela Floppa Central (Aparencia ou Ferramentas) ou com `floppa-mods`.
 Mods mudam temas, cores, fundos, fontes, o painel, a Floppa Busca, atalhos de teclado e trazem jogos e
@@ -132,6 +154,12 @@ Visualizador de imagens (Ristretto), compactador de arquivos (Xarchiver, direto 
 calculadora (Galculator), gerenciador de tarefas, captura de tela, mixer de som e player de video (mpv).
 
 ## Corrigido
+- **"Nao foi possivel instalar: o sudo ficou invalido depois de trocar o usuario"**: na ISO de 14/11, uma
+  regra do sudo (a do Floppa Games) tinha a permissao errada e o instalador recusava qualquer nome de usuario
+  diferente de "meuos". Agora o instalador acerta as permissoes sozinho, e uma regra quebrada desativa so
+  ela em vez de parar a instalacao. Quem usa o modo de teste com internet recebe a correcao pelo
+  **Floppa Update 0008** antes de instalar; sem internet, instale com o usuario "meuos" (da para trocar o
+  nome depois) ou baixe a ISO nova.
 - **"O sistema esquece a senha e pede para instalar de novo"**: era o CD/ISO que ficava no leitor depois de
   instalar (comum no VirtualBox): o computador ligava o CD de novo, que e so um modo de teste (nada fica
   salvo) e abre o instalador. Agora o menu do CD **procura o Floppa OS instalado** em qualquer disco e, se
