@@ -11,3 +11,4 @@ ISO|26|meuos-v26.iso|-|Floppa OS 26 Basic: Floppa Central, visual novo, Modo Jog
 9|26|floppa-update-0009.tar.gz|ae29d95124edd2af74821c4a7f74f8345e856ececd5e08f0ec37934ef1665ed9|Floppa Roblox: corrige o aviso falso de sem internet ao ligar a loja Flathub
 10|26|floppa-update-0010.tar.gz|dfe758a2fcdedfb8699d1011cf3a84627197445d409e4d1e670fad625380bc5e|Roblox e Steam: acerta o relogio atrasado antes de baixar (o apt dizia que o Debian nao estava assinado)
 11|26|floppa-update-0011.tar.gz|3a7c61ee06317a4afd4c461c04a1f83d7e99ac94be0cbedc3947e091a25da76a|Floppa Roblox: liga o modo OpenGL do Sober sozinho quando a placa de video nao tem Vulkan (erro de graficos)
+12|26|floppa-update-0012.tar.gz|79175e33e7f9f9dc0e573b53b780894ec6d592cd941ef5eba56d81c9d8f32b52|Floppa Roblox: atualiza os drivers de video do Flatpak (o Sober nao reconhecia a placa de video)
